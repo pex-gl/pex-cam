@@ -1,4 +1,4 @@
-var CameraAbstract = require('./AbstractCamera');
+var AbstractCamera = require('./AbstractCamera');
 var Vec2 = require('pex-math/Vec2');
 var Vec3 = require('pex-math/Vec3');
 var Vec4 = require('pex-math/Vec4');
@@ -17,7 +17,7 @@ var TEMP_VEC4   = Vec4.create();
 var TEMP_MAT4   = Mat4.create();
 
 function PerspCamera(fov, aspectRatio, near, far){
-    CameraAbstract.call(this);
+    AbstractCamera.call(this);
 
     this._aspectRatio = aspectRatio;
 
@@ -31,7 +31,7 @@ function PerspCamera(fov, aspectRatio, near, far){
     this.updateViewMatrix();
 }
 
-PerspCamera.prototype = Object.create(CameraAbstract.prototype);
+PerspCamera.prototype = Object.create(AbstractCamera.prototype);
 PerspCamera.prototype.constructor = PerspCamera;
 
 PerspCamera.prototype.setFov = function(fov){
