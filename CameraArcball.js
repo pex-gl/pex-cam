@@ -83,6 +83,12 @@ function CameraArcball(camera, windowWidth, windowHeight){
     this._updateRadius();
 }
 
+CameraArcball.prototype.setLookDirection = function(direction){
+    direction = Vec3.normalize(Vec3.copy(direction));
+    var orientation = Quat.fromDirection(Quat.create(),direction);
+    Quat.set(this._orientTarget,Quat.normalize(Quat.invert(orientation)));
+};
+
 CameraArcball.prototype.getBoundsSize = function(out){
     out = out === undefined ? Vec2.create() : out;
     return Vec2.set(out,this._boundsSize);
