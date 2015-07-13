@@ -14,6 +14,40 @@ var TEMP_VEC2_1 = Vec2.create();
 var TEMP_VEC2_2 = Vec2.create();
 var TEMP_VEC3_0 = Vec3.create();
 
+//http://jsperf.com/quaternion-slerp-implementations
+//modified to prevent taking shortest path
+function slerpLongest(a,b,t){
+    var ax = a[0];
+    var ay = a[1];
+    var az = a[2];
+    var aw = a[3];
+    var bx = b[0];
+    var by = b[1];
+    var bz = b[2];
+    var bw = b[3];
+
+    var omega, cosom, sinom, scale0, scale1;
+
+    cosom = ax * bx + ay * by + az * bz + aw * bw;
+
+    if ( (1.0 - cosom) > 0.000001 ) {
+        omega  = Math.acos(cosom);
+        sinom  = Math.sin(omega);
+        scale0 = Math.sin((1.0 - t) * omega) / sinom;
+        scale1 = Math.sin(t * omega) / sinom;
+    } else {
+        scale0 = 1.0 - t;
+        scale1 = t;
+    }
+
+    a[0] = scale0 * ax + scale1 * bx;
+    a[1] = scale0 * ay + scale1 * by;
+    a[2] = scale0 * az + scale1 * bz;
+    a[3] = scale0 * aw + scale1 * bw;
+
+    return a;
+}
+
 function CameraArcball(camera, windowWidth, windowHeight){
     this._camera = camera;
     this._center = null;
@@ -104,14 +138,13 @@ CameraArcball.prototype._updateRadius = function(){
     this._radius = Math.min(boundsSize[0],boundsSize[1]) * this._radiusScale;
 };
 
-
 CameraArcball.prototype._mapSphere = function(pos){
-    pos = Vec2.set(TEMP_VEC2_2,pos);
+    pos = Vec2.set(TEMP_VEC2_0,pos);
 
     var dir = this._distance < 0 ? -1 : 1;
     pos = Vec2.sub(pos,this._center);
     pos = Vec2.scale(pos, 1.0 / this._radius);
-    pos = Vec3.set3(TEMP_VEC3_0,pos[0],pos[1] * dir, 0);
+    pos = Vec3.set3(TEMP_VEC2_1,pos[0],pos[1] * dir, 0);
 
     var len = Vec3.lengthSq(pos);
     if(len > 1.0){
@@ -120,6 +153,7 @@ CameraArcball.prototype._mapSphere = function(pos){
     else{
         pos[2] = Math.sqrt(1 - len);
     }
+
     return pos;
 };
 
@@ -156,13 +190,6 @@ CameraArcball.prototype.onMouseDrag = function(e){
     Quat.mult(this._orientTarget, this._orientDown);
 };
 
-CameraArcball.prototype.onMouseUp = function(e){
-    if(!this._interactive){
-        return;
-    }
-
-};
-
 CameraArcball.prototype.onMouseScroll = function(e){
     if(!this._interactive){
         return;
@@ -186,7 +213,7 @@ CameraArcball.prototype.onWindowResize = function(e){
 CameraArcball.prototype.apply = function(){
     this._distance += (this._distanceTarget - this._distance) * this._speed;
 
-    Quat.interpolateTo(this._orientCurr,this._orientTarget,this._speed);
+    slerpLongest(this._orientCurr,this._orientTarget,this._speed);
     Mat4.fromQuat(this._matrix,this._orientCurr);
 
     var viewMatrix = this._camera.getViewMatrix();
