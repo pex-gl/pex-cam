@@ -96,11 +96,11 @@ CameraAbstract.prototype.getAspectRatio = function(){
     return this._aspectRatio;
 };
 
-CameraAbstract.prototype.updateProjectionMatrix = function(){
+CameraAbstract.prototype._updateProjectionMatrix = function(){
     throw new Error(STR_ERROR_NOT_IMPLEMENTED.replace('%s','updateProjectionMatrix'));
 };
 
-CameraAbstract.prototype.updateViewMatrix = function(){
+CameraAbstract.prototype._updateViewMatrix = function(){
     if(!this._matrixViewDirty){
         return;
     }
@@ -108,16 +108,13 @@ CameraAbstract.prototype.updateViewMatrix = function(){
     this._matrixViewDirty = false;
 };
 
-CameraAbstract.prototype.updateMatrices = function(){
-    this.updateProjectionMatrix();
-    this.updateViewMatrix();
-};
-
 CameraAbstract.prototype.getProjectionMatrix = function(){
+    this._updateProjectionMatrix();
     return this._matrixProjection;
 };
 
 CameraAbstract.prototype.getViewMatrix = function(){
+    this._updateViewMatrix();
     return this._matrixView;
 };
 
