@@ -38,10 +38,9 @@ OrthoCamera.prototype.setOrtho = function(left, right, bottom, top, near, far){
     this._near          = near;
     this._far           = far;
     this._matrixProjectionDirty = true;
-    this.updateProjectionMatrix();
 };
 
-OrthoCamera.prototype.updateProjectionMatrix = function(){
+OrthoCamera.prototype._updateProjectionMatrix = function(){
     if(!this._matrixProjectionDirty){
         return;
     }
