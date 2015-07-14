@@ -27,8 +27,6 @@ function PerspCamera(fov, aspectRatio, near, far){
         near        === undefined ? DEFAULT_NEAR : near,
         far         === undefined ? DEFAULT_FAR : far
     );
-
-    this.updateViewMatrix();
 }
 
 PerspCamera.prototype = Object.create(AbstractCamera.prototype);
@@ -61,10 +59,9 @@ PerspCamera.prototype.setPerspective = function(fov, aspectRatio, near, far){
     this._near        = near;
     this._far         = far;
     this._matrixProjectionDirty = true;
-    this.updateProjectionMatrix();
 };
 
-PerspCamera.prototype.updateProjectionMatrix = function(){
+PerspCamera.prototype._updateProjectionMatrix = function(){
     if(!this._matrixProjectionDirty){
         return;
     }
