@@ -38,7 +38,7 @@ CameraAbstract.prototype.setTarget = function(target){
 
 CameraAbstract.prototype.getTarget = function(out){
     out = out === undefined ? Vec3.create() : out;
-    Vec3.set(out,this._target);
+    return Vec3.set(out,this._target);
 };
 
 CameraAbstract.prototype.setPosition = function(position){
@@ -48,7 +48,7 @@ CameraAbstract.prototype.setPosition = function(position){
 
 CameraAbstract.prototype.getPosition = function(out){
     out = out === undefined ? Vec3.create() : out;
-    Vec3.set(out, this._position);
+    return Vec3.set(out, this._position);
 };
 
 CameraAbstract.prototype.setUp = function(up){
@@ -58,7 +58,7 @@ CameraAbstract.prototype.setUp = function(up){
 
 CameraAbstract.prototype.getUp = function(out){
     out = out === undefined ? Vec3.create() : out;
-    Vec3.set(out, this._up);
+    return Vec3.set(out, this._up);
 };
 
 CameraAbstract.prototype.lookAt = function(from, to, up){
@@ -118,19 +118,8 @@ CameraAbstract.prototype.getViewMatrix = function(){
     return this._matrixView;
 };
 
-CameraAbstract.prototype.getScreenPos = function(point, width, height, out){
-    out = out === undefined ? Vec2.create() : out;
-
-    Vec4.fromVec3(TEMP_VEC4, point);
-    Vec4.multMat4(TEMP_VEC4, this._matrixView);
-    Vec4.multMat4(TEMP_VEC4 ,this._matrixProjection);
-
-    Vec2.set2(out, TEMP_VEC4[0], TEMP_VEC4[1]);
-    Vec2.scale(out, 1 / TEMP_VEC4[3]);
-    out[0] = (out[0] * 0.5 + 0.5) * width;
-    out[1] = (out[1] * 0.5 + 0.5) * height;
-
-    return out;
+CameraAbstract.prototype.setFrustumOffset = function(x, y, width, height, widthTotal, heightTotal){
+    throw new Error(STR_ERROR_NOT_IMPLEMENTED.replace('%s','setFrusumOffset'));
 };
 
 CameraAbstract.prototype.getViewRay = function(point, width, height){
@@ -143,10 +132,6 @@ CameraAbstract.prototype.getWorldRay = function(point, width, height){
 
 CameraAbstract.prototype.getFrustumClippingPlanes = function(){
     throw new Error(STR_ERROR_NOT_IMPLEMENTED.replace('%s','getFrustumClippingPlanes'));
-};
-
-CameraAbstract.prototype.setFrustumOffset = function(x, y, width, height, widthTotal, heightTotal){
-    throw new Error(STR_ERROR_NOT_IMPLEMENTED.replace('%s','setFrusumOffset'));
 };
 
 module.exports = CameraAbstract;
