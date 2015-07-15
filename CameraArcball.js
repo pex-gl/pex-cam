@@ -111,12 +111,8 @@ CameraArcball.prototype.getDistance = function(){
 };
 
 CameraArcball.prototype.setRadiusScale = function(scale){
-    this._radiusScale = 1.0 / (scale === undefined ? DEFAULT_RADIUS_SCALE : scale);
+    this._radiusScale = 1.0 / (1.0 / (scale === undefined ? DEFAULT_RADIUS_SCALE : scale) * 2);
     this._updateRadius();
-};
-
-CameraArcball.prototype.getRadiusScale = function(){
-    return this._radiusScale;
 };
 
 CameraArcball.prototype.setSpeed = function(speed){
