@@ -5,7 +5,7 @@ var Mat4      = require('pex-math/Mat4');
 var Quat      = require('pex-math/Quat');
 var MathUtils = require('pex-math/Utils');
 
-var DEFAULT_RADIUS_SCALE = 2.25;
+var DEFAULT_RADIUS_SCALE = 1;
 var DEFAULT_SPEED = 0.095;
 var DEFAULT_DISTANCE_STEP = 0.25;
 
