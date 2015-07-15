@@ -115,6 +115,10 @@ CameraArcball.prototype.setRadiusScale = function(scale){
     this._updateRadius();
 };
 
+CameraArcball.prototype.getRadiusScale = function(){
+    return this._radiusScale;
+};
+
 CameraArcball.prototype.setSpeed = function(speed){
     this._speed = speed;
 };
