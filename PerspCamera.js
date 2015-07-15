@@ -70,27 +70,45 @@ PerspCamera.prototype._updateProjectionMatrix = function(){
 };
 
 PerspCamera.prototype.getViewRay = function(point, width, height, out){
-    out = out === undefined ? Vec2.create() : out;
+    if(out === undefined){
+        out = [[0,0],[0,0]];
+    }
+    else {
+        out[0] = out[0] === undefined ? [0,0] : out[0];
+        out[1] = out[1] === undefined ? [0,0] : out[1];
+    }
 
-    var width_2  = width * 0.5;
-    var height_2 = height * 0.5;
+    var x =  point[0] / width * 2 - 1;
+    var y = -point[1] / height * 2 + 1;
 
-    point = Vec2.set2(TEMP_VEC2, (point[0] - width_2) / width_2, -(point[1] - height_2) / height_2);
+    var hNear = 2 * Math.tan(this._fov / 180 * Math.PI / 2) * this._near;
+    var wNear = hNear * this._aspectRatio;
 
-    var hnear = 2 * Math.tan(this._fov / 180 * Math.PI * 0.5) * this._near;
-    var wnear = hnear * this._aspectRatio;
+    x *= (wNear * 0.5);
+    y *= (hNear * 0.5);
 
-    point[0] *= hnear * 0.5;
-    point[1] *= wnear * 0.5;
-
-    var origin    = Vec3.toZero(TEMP_VEC3_0);
-    var target    = Vec3.set3(TEMO_VEC3_1, point[0], point[1], -this._near);
-    var direction = Vec3.normalize(Vec3.sub(Vec3.set(TEMP_VEC3_2, target), origin));
-
-    out[0] = origin;
-    out[1] = direction;
+    Vec3.set3(out[0],0,0,0);
+    Vec3.normalize(Vec3.set3(out[1], x, y, -this._near));
 
     return out;
+};
+
+PerspCamera.prototype.getWorldRay = function(point, width, height, out){
+    if(out === undefined){
+        out = [[0,0],[0,0]];
+    }
+    else {
+        out[0] = out[0] === undefined ? [0,0] : out[0];
+        out[1] = out[1] === undefined ? [0,0] : out[1];
+    }
+    var viewRay       = this.getViewRay(point,width,height,out);
+    var invViewMatrix = Mat4.invert(Mat4.set(TEMP_MAT4,this._matrixView));
+
+    Vec3.multMat4(viewRay[0],invViewMatrix);
+    Vec3.multMat4(viewRay[1],invViewMatrix);
+    Vec3.normalize(Vec3.sub(viewRay[1],viewRay[0]));
+
+    return viewRay;
 };
 
 PerspCamera.prototype.setFrustumOffset = function(x, y, width, height, widthTotal, heightTotal){
