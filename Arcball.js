@@ -52,7 +52,7 @@ function slerpLongest(a,b,t){
     return a;
 }
 
-function CameraArcball(camera, windowWidth, windowHeight){
+function Arcball(camera, windowWidth, windowHeight){
     this._camera = camera;
     this._center = null;
     this._radius = null;
@@ -106,68 +106,68 @@ function CameraArcball(camera, windowWidth, windowHeight){
     this._updateRadius();
 }
 
-CameraArcball.prototype.setLookDirection = function(direction){
+Arcball.prototype.setLookDirection = function(direction){
     direction = Vec3.normalize(Vec3.copy(direction));
     var orientation = Quat.fromDirection(Quat.create(),direction);
     Quat.set(this._orientTarget,Quat.normalize(Quat.invert(orientation)));
 };
 
-CameraArcball.prototype.getBoundsSize = function(out){
+Arcball.prototype.getBoundsSize = function(out){
     out = out === undefined ? Vec2.create() : out;
     return Vec2.set(out,this._boundsSize);
 };
 
-CameraArcball.prototype.setDistanceMin = function(min){
+Arcball.prototype.setDistanceMin = function(min){
     this._distanceMin = min;
 };
 
-CameraArcball.prototype.setDistanceMax = function(max){
+Arcball.prototype.setDistanceMax = function(max){
     this._distanceMax = max;
 };
 
-CameraArcball.prototype.setDistance = function(distance){
+Arcball.prototype.setDistance = function(distance){
     this._distanceTarget = distance;
 };
 
-CameraArcball.prototype.getDistance = function(){
+Arcball.prototype.getDistance = function(){
     return this._distance;
 };
 
-CameraArcball.prototype.setRadiusScale = function(scale){
+Arcball.prototype.setRadiusScale = function(scale){
     this._radiusScale = 1.0 / (1.0 / (scale === undefined ? DEFAULT_RADIUS_SCALE : scale) * 2);
     this._updateRadius();
 };
 
-CameraArcball.prototype.getRadiusScale = function(){
+Arcball.prototype.getRadiusScale = function(){
     return this._radiusScale;
 };
 
-CameraArcball.prototype.setSpeed = function(speed){
+Arcball.prototype.setSpeed = function(speed){
     this._speed = speed;
 };
 
-CameraArcball.prototype.getSpeed = function(){
+Arcball.prototype.getSpeed = function(){
     return this._speed;
 };
 
-CameraArcball.prototype.enable = function(){
+Arcball.prototype.enable = function(){
     this._interactive = true;
 };
 
-CameraArcball.prototype.disable = function(){
+Arcball.prototype.disable = function(){
     this._interactive = false;
 };
 
-CameraArcball.prototype.isEnabled = function(){
+Arcball.prototype.isEnabled = function(){
     return this._interactive;
 };
 
-CameraArcball.prototype._updateRadius = function(){
+Arcball.prototype._updateRadius = function(){
     var boundsSize = this._boundsSize;
     this._radius = Math.min(boundsSize[0],boundsSize[1]) * this._radiusScale;
 };
 
-CameraArcball.prototype._mapSphere = function(pos){
+Arcball.prototype._mapSphere = function(pos){
     pos = Vec2.set(TEMP_VEC2_0,pos);
 
     var dir = this._distance < 0 ? -1 : 1;
@@ -186,7 +186,7 @@ CameraArcball.prototype._mapSphere = function(pos){
     return pos;
 };
 
-CameraArcball.prototype.onMouseDown = function(e){
+Arcball.prototype.onMouseDown = function(e){
     if(!this._interactive){
         return;
     }
@@ -216,7 +216,7 @@ CameraArcball.prototype.onMouseDown = function(e){
     }
 };
 
-CameraArcball.prototype.onMouseDrag = function(e){
+Arcball.prototype.onMouseDrag = function(e){
     if(!this._interactive){
         return;
     }
@@ -256,7 +256,7 @@ CameraArcball.prototype.onMouseDrag = function(e){
     }
 };
 
-CameraArcball.prototype.onMouseScroll = function(e){
+Arcball.prototype.onMouseScroll = function(e){
     if(!this._interactive){
         return;
     }
@@ -268,7 +268,7 @@ CameraArcball.prototype.onMouseScroll = function(e){
     this._distanceTarget  = Math.max(this._distanceMin, Math.min(this._distanceTarget,this._distanceMax));
 };
 
-CameraArcball.prototype.onWindowResize = function(e){
+Arcball.prototype.onWindowResize = function(e){
     var width  = e.width;
     var height = e.height;
     Vec2.set2(this._boundsSize,width,height);
@@ -276,7 +276,7 @@ CameraArcball.prototype.onWindowResize = function(e){
     this._updateRadius();
 };
 
-CameraArcball.prototype.apply = function(){
+Arcball.prototype.apply = function(){
     this._distance += (this._distanceTarget - this._distance) * this._speed;
 
     slerpLongest(this._orientCurr,this._orientTarget,this._speed);
@@ -296,17 +296,17 @@ CameraArcball.prototype.apply = function(){
     this._distancePrev = this._distance;
 };
 
-CameraArcball.prototype.resetPanning = function(){
+Arcball.prototype.resetPanning = function(){
     this._camera.setTarget(this._targetCameraWorldOriginal);
     this._pan = false;
 };
 
-CameraArcball.prototype.isPanning = function(){
+Arcball.prototype.isPanning = function(){
     return this._pan;
 };
 
-CameraArcball.prototype.isZooming = function(){
+Arcball.prototype.isZooming = function(){
     return this._zoom;
 };
 
-module.exports = CameraArcball;
+module.exports = Arcball;
