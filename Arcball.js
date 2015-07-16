@@ -7,7 +7,7 @@ var Plane = require('pex-geom/Plane');
 
 var DEFAULT_RADIUS_SCALE = 1;
 var DEFAULT_SPEED = 0.175;
-var DEFAULT_DISTANCE_STEP = 0.25;
+var DEFAULT_DISTANCE_STEP = 0.05;
 
 var TEMP_VEC2_0 = Vec2.create();
 var TEMP_VEC2_1 = Vec2.create();
