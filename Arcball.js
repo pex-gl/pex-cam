@@ -264,7 +264,7 @@ Arcball.prototype.onMouseScroll = function(e){
     if(direction == 0){
         return;
     }
-    this._distanceTarget += direction * -1 * this._distanceStep * (e.ctrlKey ? 2.0 : 1.0);
+    this._distanceTarget += direction * -1 * this._distanceStep * (e.altKey ? 2.0 : 1.0);
     this._distanceTarget  = Math.max(this._distanceMin, Math.min(this._distanceTarget,this._distanceMax));
 };
 
