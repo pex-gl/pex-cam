@@ -1,6 +1,6 @@
 module.exports = {
-    OrthoCamera   : require('./OrthoCamera'),
-    PerspCamera   : require('./PerspCamera'),
-    CameraArcball : require('./CameraArcball'),
+    OrthoCamera : require('./OrthoCamera'),
+    PerspCamera : require('./PerspCamera'),
+    Arcball     : require('./Arcball'),
     CameraOrbiter : require('./CameraOrbiter')
 };
