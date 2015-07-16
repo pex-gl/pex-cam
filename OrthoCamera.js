@@ -17,7 +17,6 @@ function OrthoCamera(aspectRatio, near, far){
 
     this._aspectRatio = aspectRatio;
     this.setOrtho(-aspectRatio, aspectRatio, -1, 1, near, far);
-    this.updateViewMatrix();
 }
 
 OrthoCamera.prototype = Object.create(AbstractCamera.prototype);
