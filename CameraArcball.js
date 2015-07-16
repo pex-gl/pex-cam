@@ -1,18 +1,22 @@
 var Vec2      = require('pex-math/Vec2');
 var Vec3      = require('pex-math/Vec3');
-var Vec4      = require('pex-math/Vec4');
 var Mat4      = require('pex-math/Mat4');
 var Quat      = require('pex-math/Quat');
-var MathUtils = require('pex-math/Utils');
+
+var Plane = require('pex-geom/Plane');
 
 var DEFAULT_RADIUS_SCALE = 1;
-var DEFAULT_SPEED = 0.095;
+var DEFAULT_SPEED = 0.175;
 var DEFAULT_DISTANCE_STEP = 0.25;
 
 var TEMP_VEC2_0 = Vec2.create();
 var TEMP_VEC2_1 = Vec2.create();
-var TEMP_VEC2_2 = Vec2.create();
 var TEMP_VEC3_0 = Vec3.create();
+var TEMP_VEC3_1 = Vec3.create();
+var TEMP_MAT4_0 = Mat4.create();
+
+var Y_AXIS = [0,1,0];
+var Z_AXIS = [0,0,1];
 
 //http://jsperf.com/quaternion-slerp-implementations
 //modified to prevent taking shortest path
@@ -61,13 +65,17 @@ function CameraArcball(camera, windowWidth, windowHeight){
     this.setRadiusScale(DEFAULT_RADIUS_SCALE);
     this.setSpeed(DEFAULT_SPEED);
 
+    this._zoom = false;
+
     this._distanceStep   = DEFAULT_DISTANCE_STEP;
     this._distance       = camera.getDistance();
+    this._distancePrev   = this._distance;
     this._distanceTarget = this._distance;
     this._distanceMax    = Number.MAX_VALUE;
     this._distanceMin    = Number.MIN_VALUE;
 
     this._posDown    = Vec2.create();
+    this._posDrag    = Vec2.create();
     this._posDownPtr = Vec3.create();
     this._posDragPtr = Vec3.create();
 
@@ -75,6 +83,21 @@ function CameraArcball(camera, windowWidth, windowHeight){
     this._orientDown   = Quat.create();
     this._orientDrag   = Quat.create();
     this._orientTarget = Quat.copy(this._orientCurr);
+
+    this._pan = false;
+
+    this._targetCameraView          = Vec3.create();
+    this._targetCameraWorld         = Vec3.create();
+    this._targetCameraWorldOriginal = Vec3.copy(camera.getTarget());
+
+    this._planeTargetView   = Plane.create();
+    this._planeTargetWorld  = Plane.create();
+
+    this._planePosDownView = Vec3.create();
+    this._planePosDragView = Vec3.create();
+
+    this._planePosDownWorld = Vec3.create();
+    this._planePosDragWorld = Vec3.create();
 
     this._matrix = Mat4.create();
 
@@ -167,6 +190,9 @@ CameraArcball.prototype.onMouseDown = function(e){
     if(!this._interactive){
         return;
     }
+
+    this._pan = e.shiftKey;
+
     var boundsHeight = this._boundsSize[1];
     var mousePos     = Vec2.set2(TEMP_VEC2_0, e.x, e.y);
     this._posDown    = Vec2.set(this._posDown, mousePos);
@@ -176,6 +202,18 @@ CameraArcball.prototype.onMouseDown = function(e){
     Vec3.set(this._posDownPtr, this._mapSphere(pos));
     Quat.set(this._orientDown, this._orientCurr);
     Quat.identity(this._orientDrag);
+
+    if(this._pan){
+
+        Vec3.set(this._targetCameraWorld,this._camera.getTarget());
+        Vec3.multMat4(Vec3.set(this._targetCameraView,this._targetCameraWorld),this._camera.getViewMatrix());
+
+        Vec3.set(this._planeTargetView[0],this._targetCameraView);
+        Vec3.set(this._planeTargetView[1],Z_AXIS);
+
+        var invViewMatrix = Mat4.invert(Mat4.set(TEMP_MAT4_0,this._camera.getViewMatrix()));
+        Vec3.multMat4(Vec3.set(this._planeTargetWorld[1],this._planeTargetView[1]),invViewMatrix);
+    }
 };
 
 CameraArcball.prototype.onMouseDrag = function(e){
@@ -183,17 +221,39 @@ CameraArcball.prototype.onMouseDrag = function(e){
         return;
     }
 
+    var boundsWidth  = this._boundsSize[0];
     var boundsHeight = this._boundsSize[1];
     var mousePos     = Vec2.set2(TEMP_VEC2_0, e.x, e.y);
-    var pos          = Vec2.set2(TEMP_VEC2_0, mousePos[0], boundsHeight - mousePos[1]);
 
-    var posDownPtr = this._posDownPtr;
-    var posDragPtr = Vec3.set(this._posDragPtr,this._mapSphere(pos));
-    var temp       = Vec3.cross(Vec3.set(Vec3.create(),posDownPtr), posDragPtr);
+    this._posDrag = Vec2.set2(TEMP_VEC2_0, e.x, e.y);
+    this._pan = e.shiftKey;
 
-    Quat.set4(this._orientDrag,temp[0],temp[1],temp[2],Vec3.dot(posDownPtr,posDragPtr));
-    Quat.set(this._orientTarget, this._orientDrag);
-    Quat.mult(this._orientTarget, this._orientDown);
+    if(this._pan){
+        Plane.getRayIntersection(this._planeTargetView,this._camera.getViewRay(this._posDown,boundsWidth,boundsHeight),this._planePosDownView);
+        Plane.getRayIntersection(this._planeTargetView,this._camera.getViewRay(this._posDrag,boundsWidth,boundsHeight),this._planePosDragView);
+
+        var invViewMatrix = Mat4.invert(Mat4.set(TEMP_MAT4_0,this._camera.getViewMatrix()));
+
+        Vec3.multMat4(Vec3.set(this._planePosDownWorld,this._planePosDownView),invViewMatrix);
+        Vec3.multMat4(Vec3.set(this._planePosDragWorld,this._planePosDragView),invViewMatrix);
+
+        var targetCameraWorld = Vec3.set(TEMP_VEC3_0,this._targetCameraWorld);
+        var planePosDragWorld = Vec3.set(TEMP_VEC3_1,this._planePosDragWorld);
+        var planePosDelta     = Vec3.sub(planePosDragWorld,this._planePosDownWorld);
+
+        this._camera.setTarget(Vec3.sub(targetCameraWorld,planePosDelta));
+    }
+    else {
+        var pos = Vec2.set2(TEMP_VEC2_0, mousePos[0], boundsHeight - mousePos[1]);
+
+        var posDownPtr = this._posDownPtr;
+        var posDragPtr = Vec3.set(this._posDragPtr,this._mapSphere(pos));
+        var temp       = Vec3.cross(Vec3.set(Vec3.create(),posDownPtr), posDragPtr);
+
+        Quat.set4(this._orientDrag,temp[0],temp[1],temp[2],Vec3.dot(posDownPtr,posDragPtr));
+        Quat.set(this._orientTarget, this._orientDrag);
+        Quat.mult(this._orientTarget, this._orientDown);
+    }
 };
 
 CameraArcball.prototype.onMouseScroll = function(e){
@@ -222,10 +282,31 @@ CameraArcball.prototype.apply = function(){
     slerpLongest(this._orientCurr,this._orientTarget,this._speed);
     Mat4.fromQuat(this._matrix,this._orientCurr);
 
-    var viewMatrix = this._camera.getViewMatrix();
-    Mat4.identity(viewMatrix);
-    Mat4.setTranslation3(viewMatrix,0,0,-this._distance);
-    Mat4.mult(viewMatrix,this._matrix);
+    var orient = Quat.copy(this._orientCurr);
+    orient[3] *= -1;
+
+    var target   = this._camera.getTarget();
+    var offset   = Vec3.multQuat(Vec3.set3(TEMP_VEC3_0,0,0,this._distance),orient);
+    var position = Vec3.add(Vec3.set(TEMP_VEC3_1,target),offset);
+    var up       = Vec3.multQuat(Vec3.set(TEMP_VEC3_0,Y_AXIS),orient);
+
+    this._camera.lookAt(position,target,up);
+
+    this._zoom = this._distance == this._distancePrev;
+    this._distancePrev = this._distance;
+};
+
+CameraArcball.prototype.resetPanning = function(){
+    this._camera.setTarget(this._targetCameraWorldOriginal);
+    this._pan = false;
+};
+
+CameraArcball.prototype.isPanning = function(){
+    return this._pan;
+};
+
+CameraArcball.prototype.isZooming = function(){
+    return this._zoom;
 };
 
 module.exports = CameraArcball;
