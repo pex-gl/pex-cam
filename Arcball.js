@@ -5,6 +5,8 @@ var Quat      = require('pex-math/Quat');
 
 var Plane = require('pex-geom/Plane');
 
+//https://www.talisman.org/~erlkonig/misc/shoemake92-arcball.pdf
+
 var DEFAULT_RADIUS_SCALE = 1;
 var DEFAULT_SPEED = 0.175;
 var DEFAULT_DISTANCE_STEP = 0.05;
@@ -13,10 +15,17 @@ var TEMP_VEC2_0 = Vec2.create();
 var TEMP_VEC2_1 = Vec2.create();
 var TEMP_VEC3_0 = Vec3.create();
 var TEMP_VEC3_1 = Vec3.create();
+var TEMP_VEC3_2 = Vec3.create();
 var TEMP_MAT4_0 = Mat4.create();
 
+var X_AXIS = [1,0,0];
 var Y_AXIS = [0,1,0];
 var Z_AXIS = [0,0,1];
+
+var ConstrainAxisMode = {
+    CAMERA : 'constrainAxisModeCamera',
+    WORLD  : 'constrainAxisModeWorld'
+};
 
 //http://jsperf.com/quaternion-slerp-implementations
 //modified to prevent taking shortest path
@@ -74,6 +83,8 @@ function Arcball(camera, windowWidth, windowHeight){
     this._distanceMax    = Number.MAX_VALUE;
     this._distanceMin    = Number.MIN_VALUE;
 
+    this._drag = false;
+
     this._posDown    = Vec2.create();
     this._posDrag    = Vec2.create();
     this._posDownPtr = Vec3.create();
@@ -98,6 +109,11 @@ function Arcball(camera, windowWidth, windowHeight){
 
     this._planePosDownWorld = Vec3.create();
     this._planePosDragWorld = Vec3.create();
+
+    this._constrain          = false;
+    this._constrainAxes      = [Vec3.copy(X_AXIS),Vec3.copy(Y_AXIS),Vec3.copy(Z_AXIS)];
+    this._constrainAxisIndex = 1;
+    this._constrainMode      = ConstrainAxisMode.CAMERA;
 
     this._matrix = Mat4.create();
 
@@ -175,14 +191,38 @@ Arcball.prototype._mapSphere = function(pos){
     pos = Vec2.scale(pos, 1.0 / this._radius);
     pos = Vec3.set3(TEMP_VEC2_1,pos[0],pos[1] * dir, 0);
 
-    var len = Vec3.lengthSq(pos);
-    if(len > 1.0){
+    var r = Vec3.lengthSq(pos);
+    if(r > 1.0){
         Vec3.normalize(pos);
     }
     else{
-        pos[2] = Math.sqrt(1 - len);
+        pos[2] = Math.sqrt(1 - r);
     }
 
+    if(this._constrain){
+        this._constrainToAxis(pos);
+    }
+
+
+    return pos;
+};
+
+Arcball.prototype._constrainToAxis = function(pos){
+    var axis = this._constrainAxes[this._constrainAxisIndex];
+    var dot  = Vec3.dot(pos,axis);
+    var proj = Vec3.sub(pos,Vec3.scale(Vec3.set(TEMP_VEC3_2,axis),dot));
+    var norm = Vec3.length(proj);
+
+    if(norm > 0){
+        if(proj[2] < 0.0){
+            Vec3.invert(proj);
+        }
+        Vec3.normalize(pos);
+    } else if(axis[2] == 1.0){
+        Vec3.set3(pos,1,0,0);
+    } else {
+        Vec3.set3(pos,-axis[1],axis[0],0);
+    }
     return pos;
 };
 
@@ -192,6 +232,8 @@ Arcball.prototype.onMouseDown = function(e){
     }
 
     this._pan = e.shiftKey;
+    this._constrain = e.ctrlKey && e.altKey;
+    this._drag = false;
 
     var boundsHeight = this._boundsSize[1];
     var mousePos     = Vec2.set2(TEMP_VEC2_0, e.x, e.y);
@@ -227,6 +269,8 @@ Arcball.prototype.onMouseDrag = function(e){
 
     this._posDrag = Vec2.set2(TEMP_VEC2_0, e.x, e.y);
     this._pan = e.shiftKey;
+    this._constrain = e.ctrlKey && e.altKey;
+    this._drag = true;
 
     if(this._pan){
         Plane.getRayIntersection(this._planeTargetView,this._camera.getViewRay(this._posDown,boundsWidth,boundsHeight),this._planePosDownView);
@@ -251,9 +295,23 @@ Arcball.prototype.onMouseDrag = function(e){
         var temp       = Vec3.cross(Vec3.set(Vec3.create(),posDownPtr), posDragPtr);
 
         Quat.set4(this._orientDrag,temp[0],temp[1],temp[2],Vec3.dot(posDownPtr,posDragPtr));
+        Quat.normalize(this._orientDrag);
         Quat.set(this._orientTarget, this._orientDrag);
         Quat.mult(this._orientTarget, this._orientDown);
+
     }
+};
+
+Arcball.prototype.onKeyPress = function(e){
+    console.log('Fds');
+};
+
+Arcball.prototype.onKeyUp = function(){
+    this._constrain = false;
+};
+
+Arcball.prototype.onMouseUp = function(){
+    this._drag = false;
 };
 
 Arcball.prototype.onMouseScroll = function(e){
@@ -279,10 +337,27 @@ Arcball.prototype.onWindowResize = function(e){
 Arcball.prototype.apply = function(){
     this._distance += (this._distanceTarget - this._distance) * this._speed;
 
-    slerpLongest(this._orientCurr,this._orientTarget,this._speed);
     Mat4.fromQuat(this._matrix,this._orientCurr);
-
     var orient = Quat.copy(this._orientCurr);
+
+    if(this._constrain){
+        Quat.slerp(this._orientCurr,this._orientTarget,this._speed);
+
+        if(!this._drag){
+            switch (this._constrainMode){
+                case ConstrainAxisMode.CAMERA :
+                    Vec3.set(this._constrainAxes[0],X_AXIS);
+                    Vec3.set(this._constrainAxes[1],Y_AXIS);
+                    Vec3.set(this._constrainAxes[2],Z_AXIS);
+                    break;
+                case ConstrainAxisMode.WORLD :
+                    break;
+            }
+        }
+    } else {
+        slerpLongest(this._orientCurr,this._orientTarget,this._speed);
+    }
+
     orient[3] *= -1;
 
     var target   = this._camera.getTarget();
@@ -307,6 +382,14 @@ Arcball.prototype.isPanning = function(){
 
 Arcball.prototype.isZooming = function(){
     return this._zoom;
+};
+
+Arcball.prototype.isDragging = function(){
+    return this._drag;
+};
+
+Arcball.prototype.isConstrained = function(){
+    return this._constrain;
 };
 
 module.exports = Arcball;
