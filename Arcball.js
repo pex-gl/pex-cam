@@ -1,14 +1,13 @@
-var Vec2      = require('pex-math/Vec2');
-var Vec3      = require('pex-math/Vec3');
-var Mat4      = require('pex-math/Mat4');
-var Quat      = require('pex-math/Quat');
-
+var Vec2  = require('pex-math/Vec2');
+var Vec3  = require('pex-math/Vec3');
+var Mat4  = require('pex-math/Mat4');
+var Quat  = require('pex-math/Quat');
 var Plane = require('pex-geom/Plane');
 
 //https://www.talisman.org/~erlkonig/misc/shoemake92-arcball.pdf
 
-var DEFAULT_RADIUS_SCALE = 1;
-var DEFAULT_SPEED = 0.175;
+var DEFAULT_RADIUS_SCALE = 1.0;
+var DEFAULT_SPEED = 0.35;
 var DEFAULT_DISTANCE_STEP = 0.05;
 
 var TEMP_VEC2_0 = Vec2.create();
@@ -16,15 +15,17 @@ var TEMP_VEC2_1 = Vec2.create();
 var TEMP_VEC3_0 = Vec3.create();
 var TEMP_VEC3_1 = Vec3.create();
 var TEMP_VEC3_2 = Vec3.create();
-var TEMP_MAT4_0 = Mat4.create();
+var TEMP_QUAT_0 = Quat.create();
+var TEMP_QUAT_1 = Quat.create();
 
 var X_AXIS = [1,0,0];
 var Y_AXIS = [0,1,0];
 var Z_AXIS = [0,0,1];
 
 var ConstrainAxisMode = {
-    CAMERA : 'constrainAxisModeCamera',
-    WORLD  : 'constrainAxisModeWorld'
+    NONE   : -1,
+    CAMERA : 0,
+    WORLD  : 1
 };
 
 //http://jsperf.com/quaternion-slerp-implementations
@@ -89,6 +90,7 @@ function Arcball(camera, windowWidth, windowHeight){
     this._posDrag    = Vec2.create();
     this._posDownPtr = Vec3.create();
     this._posDragPtr = Vec3.create();
+    this._posMovePtr = Vec3.create();
 
     this._orientCurr   = Quat.fromMat4(Quat.create(),Mat4.copy(camera.getViewMatrix()));
     this._orientDown   = Quat.create();
@@ -110,10 +112,11 @@ function Arcball(camera, windowWidth, windowHeight){
     this._planePosDownWorld = Vec3.create();
     this._planePosDragWorld = Vec3.create();
 
-    this._constrain          = false;
-    this._constrainAxes      = [Vec3.copy(X_AXIS),Vec3.copy(Y_AXIS),Vec3.copy(Z_AXIS)];
-    this._constrainAxisIndex = 1;
-    this._constrainMode      = ConstrainAxisMode.CAMERA;
+    this._constrain           = false;
+    this._constrainAxes       = [Vec3.copy(X_AXIS), Vec3.copy(Y_AXIS), Vec3.copy(Z_AXIS)];
+    this._constrainAxisIndex  = 1;
+    this._constrainMode       = ConstrainAxisMode.WORLD;
+    this._constrainModePrev   = -1;
 
     this._matrix = Mat4.create();
 
@@ -178,15 +181,24 @@ Arcball.prototype.isEnabled = function(){
     return this._interactive;
 };
 
+Arcball.prototype._updateModifierInput = function(e){
+    this._constrainModePrev = this._constrainMode;
+    this._constrainMode     = e.shiftKey && e.ctrlKey ? ConstrainAxisMode.CAMERA : e.shiftKey && e.altKey ? ConstrainAxisMode.WORLD : ConstrainAxisMode.NONE;
+    this._constrain         = this._constrainMode != ConstrainAxisMode.NONE;
+    this._pan               = e.shiftKey && !this._constrain
+};
+
 Arcball.prototype._updateRadius = function(){
     var boundsSize = this._boundsSize;
     this._radius = Math.min(boundsSize[0],boundsSize[1]) * this._radiusScale;
 };
 
-Arcball.prototype._mapSphere = function(pos){
-    pos = Vec2.set(TEMP_VEC2_0,pos);
+Arcball.prototype._mapSphere = function(pos,constrain){
+    pos       = Vec2.set(TEMP_VEC2_0,pos);
+    constrain = this._constrain && (constrain || constrain === undefined);
 
     var dir = this._distance < 0 ? -1 : 1;
+
     pos = Vec2.sub(pos,this._center);
     pos = Vec2.scale(pos, 1.0 / this._radius);
     pos = Vec3.set3(TEMP_VEC2_1,pos[0],pos[1] * dir, 0);
@@ -199,16 +211,14 @@ Arcball.prototype._mapSphere = function(pos){
         pos[2] = Math.sqrt(1 - r);
     }
 
-    if(this._constrain){
-        this._constrainToAxis(pos);
+    if(constrain){
+        this._constrainToAxis(pos,this._constrainAxes[this._constrainAxisIndex]);
     }
-
 
     return pos;
 };
 
-Arcball.prototype._constrainToAxis = function(pos){
-    var axis = this._constrainAxes[this._constrainAxisIndex];
+Arcball.prototype._constrainToAxis = function(pos, axis){
     var dot  = Vec3.dot(pos,axis);
     var proj = Vec3.sub(pos,Vec3.scale(Vec3.set(TEMP_VEC3_2,axis),dot));
     var norm = Vec3.length(proj);
@@ -226,13 +236,34 @@ Arcball.prototype._constrainToAxis = function(pos){
     return pos;
 };
 
+//Graphics Gems IV, Page 177, Ken Shoemake
+Arcball.prototype._updateNearestAxis = function(pos){
+    if(!this._constrain){
+        return;
+    }
+
+    var constrainAxes = this._constrainAxes;
+
+    var max = -1;
+    var index  = 0;
+
+    for(var i = 0, l = constrainAxes.length, point, dot; i < l; ++i){
+        point = this._constrainToAxis(Vec3.set(TEMP_VEC3_0,pos), constrainAxes[i]);
+        dot   = Vec3.dot(point, pos);
+        if(dot > max){
+            index = i;
+            max = dot;
+        }
+    }
+    this._constrainAxisIndex = index;
+};
+
 Arcball.prototype.onMouseDown = function(e){
     if(!this._interactive){
         return;
     }
 
-    this._pan = e.shiftKey;
-    this._constrain = e.ctrlKey && e.altKey;
+    this._updateModifierInput(e);
     this._drag = false;
 
     var boundsHeight = this._boundsSize[1];
@@ -253,8 +284,7 @@ Arcball.prototype.onMouseDown = function(e){
         Vec3.set(this._planeTargetView[0],this._targetCameraView);
         Vec3.set(this._planeTargetView[1],Z_AXIS);
 
-        var invViewMatrix = Mat4.invert(Mat4.set(TEMP_MAT4_0,this._camera.getViewMatrix()));
-        Vec3.multMat4(Vec3.set(this._planeTargetWorld[1],this._planeTargetView[1]),invViewMatrix);
+        Vec3.multMat4(Vec3.set(this._planeTargetWorld[1],this._planeTargetView[1]),this._camera.getInverseViewMatrix());
     }
 };
 
@@ -263,20 +293,20 @@ Arcball.prototype.onMouseDrag = function(e){
         return;
     }
 
+    this._updateModifierInput(e);
+    this._drag = true;
+
     var boundsWidth  = this._boundsSize[0];
     var boundsHeight = this._boundsSize[1];
     var mousePos     = Vec2.set2(TEMP_VEC2_0, e.x, e.y);
 
-    this._posDrag = Vec2.set2(TEMP_VEC2_0, e.x, e.y);
-    this._pan = e.shiftKey;
-    this._constrain = e.ctrlKey && e.altKey;
-    this._drag = true;
+    this._posDrag = Vec2.set(this._posDrag,mousePos);
 
     if(this._pan){
         Plane.getRayIntersection(this._planeTargetView,this._camera.getViewRay(this._posDown,boundsWidth,boundsHeight),this._planePosDownView);
         Plane.getRayIntersection(this._planeTargetView,this._camera.getViewRay(this._posDrag,boundsWidth,boundsHeight),this._planePosDragView);
 
-        var invViewMatrix = Mat4.invert(Mat4.set(TEMP_MAT4_0,this._camera.getViewMatrix()));
+        var invViewMatrix = this._camera.getInverseViewMatrix();
 
         Vec3.multMat4(Vec3.set(this._planePosDownWorld,this._planePosDownView),invViewMatrix);
         Vec3.multMat4(Vec3.set(this._planePosDragWorld,this._planePosDragView),invViewMatrix);
@@ -298,19 +328,25 @@ Arcball.prototype.onMouseDrag = function(e){
         Quat.normalize(this._orientDrag);
         Quat.set(this._orientTarget, this._orientDrag);
         Quat.mult(this._orientTarget, this._orientDown);
-
     }
 };
 
+Arcball.prototype.onMouseMove = function(e){
+    this._updateModifierInput(e);
+    var pos = Vec2.set2(TEMP_VEC2_0, e.x, this._boundsSize[1] - e.y);
+    Vec3.set(this._posMovePtr,this._mapSphere(pos,false));
+};
+
 Arcball.prototype.onKeyPress = function(e){
-    console.log('Fds');
+    this._updateModifierInput(e);
 };
 
 Arcball.prototype.onKeyUp = function(){
     this._constrain = false;
 };
 
-Arcball.prototype.onMouseUp = function(){
+Arcball.prototype.onMouseUp = function(e){
+    this._constrain = !e.shiftKey ? false : this._constrain;
     this._drag = false;
 };
 
@@ -338,7 +374,8 @@ Arcball.prototype.apply = function(){
     this._distance += (this._distanceTarget - this._distance) * this._speed;
 
     Mat4.fromQuat(this._matrix,this._orientCurr);
-    var orient = Quat.copy(this._orientCurr);
+    var orient = Quat.set(TEMP_QUAT_0,this._orientCurr);
+    orient[3] *= -1;
 
     if(this._constrain){
         Quat.slerp(this._orientCurr,this._orientTarget,this._speed);
@@ -346,11 +383,21 @@ Arcball.prototype.apply = function(){
         if(!this._drag){
             switch (this._constrainMode){
                 case ConstrainAxisMode.CAMERA :
+                    if(this._constrainMode != this._constrainModePrev){
+                        Vec3.set(this._constrainAxes[0],X_AXIS);
+                        Vec3.set(this._constrainAxes[1],Y_AXIS);
+                        Vec3.set(this._constrainAxes[2],Z_AXIS);
+                    }
+                    break;
+                case ConstrainAxisMode.WORLD :
+                    var orientWorld = Quat.invert(Quat.set(TEMP_QUAT_1,orient));
+
                     Vec3.set(this._constrainAxes[0],X_AXIS);
                     Vec3.set(this._constrainAxes[1],Y_AXIS);
                     Vec3.set(this._constrainAxes[2],Z_AXIS);
-                    break;
-                case ConstrainAxisMode.WORLD :
+                    Vec3.multQuat(this._constrainAxes[0],orientWorld);
+                    Vec3.multQuat(this._constrainAxes[1],orientWorld);
+                    Vec3.multQuat(this._constrainAxes[2],orientWorld);
                     break;
             }
         }
@@ -358,7 +405,7 @@ Arcball.prototype.apply = function(){
         slerpLongest(this._orientCurr,this._orientTarget,this._speed);
     }
 
-    orient[3] *= -1;
+    this._updateNearestAxis(this._posMovePtr);
 
     var target   = this._camera.getTarget();
     var offset   = Vec3.multQuat(Vec3.set3(TEMP_VEC3_0,0,0,this._distance),orient);
