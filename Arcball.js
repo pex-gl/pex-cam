@@ -63,24 +63,24 @@ function slerpLongest(a,b,t){
 }
 
 function Arcball(camera, windowWidth, windowHeight){
-    this._camera = camera;
-    this._center = null;
-    this._radius = null;
-    this._radiusScale = null;
-    this._speed = null;
+    this._camera = null;;
 
     this._boundsSize = [windowWidth,windowHeight];
     this._center     = [windowWidth * 0.5, windowHeight * 0.5];
 
+    this._radius      = null;
+    this._radiusScale = null;
     this.setRadiusScale(DEFAULT_RADIUS_SCALE);
+
+    this._speed = null;
     this.setSpeed(DEFAULT_SPEED);
 
     this._zoom = false;
 
     this._distanceStep   = DEFAULT_DISTANCE_STEP;
-    this._distance       = camera.getDistance();
-    this._distancePrev   = this._distance;
-    this._distanceTarget = this._distance;
+    this._distance       = 0;
+    this._distancePrev   = 0;
+    this._distanceTarget = 0;
     this._distanceMax    = Number.MAX_VALUE;
     this._distanceMin    = Number.MIN_VALUE;
 
@@ -92,16 +92,16 @@ function Arcball(camera, windowWidth, windowHeight){
     this._posDragPtr = Vec3.create();
     this._posMovePtr = Vec3.create();
 
-    this._orientCurr   = Quat.fromMat4(Quat.create(),Mat4.copy(camera.getViewMatrix()));
+    this._orientCurr   = Quat.create();
     this._orientDown   = Quat.create();
     this._orientDrag   = Quat.create();
-    this._orientTarget = Quat.copy(this._orientCurr);
+    this._orientTarget = Quat.create();
 
     this._pan = false;
 
     this._targetCameraView          = Vec3.create();
     this._targetCameraWorld         = Vec3.create();
-    this._targetCameraWorldOriginal = Vec3.copy(camera.getTarget());
+    this._targetCameraWorldOriginal = Vec3.create();
 
     this._planeTargetView   = Plane.create();
     this._planeTargetWorld  = Plane.create();
@@ -118,12 +118,45 @@ function Arcball(camera, windowWidth, windowHeight){
     this._constrainMode       = ConstrainAxisMode.WORLD;
     this._constrainModePrev   = -1;
 
-    this._matrix = Mat4.create();
-
     this._interactive = true;
 
     this._updateRadius();
+    this.setCamera(camera);
 }
+
+Arcball.prototype.setCamera = function(camera){
+    this._camera         = camera;
+    this._distance       = camera.getDistance();
+    this._distancePrev   = this._distance;
+    this._distanceTarget = this._distance;
+
+    Vec2.toZero(this._posDown);
+    Vec2.toZero(this._posDrag);
+    Vec3.toZero(this._posDownPtr);
+    Vec3.toZero(this._posDragPtr);
+    Vec3.toZero(this._posMovePtr);
+
+    Quat.fromMat4(this._orientCurr,camera.getViewMatrix());
+    Quat.identity(this._orientDown);
+    Quat.identity(this._orientDrag);
+    Quat.set(this._orientTarget,this._orientCurr);
+
+    Vec3.toZero(this._targetCameraView);
+    Vec3.toZero(this._targetCameraWorld);
+    Vec3.set(this._targetCameraWorldOriginal,camera.getTarget());
+
+    Vec3.set3(this._planeTargetView[0],0,0,0);
+    Vec3.set3(this._planeTargetView[1],0,1,0);
+
+    Vec3.set3(this._planeTargetWorld[0],0,0,0);
+    Vec3.set3(this._planeTargetWorld[1],0,1,0);
+
+    Vec3.toZero(this._planePosDownView);
+    Vec3.toZero(this._planePosDragView);
+
+    Vec3.toZero(this._planePosDownWorld);
+    Vec3.toZero(this._planePosDragWorld);
+};
 
 Arcball.prototype.setLookDirection = function(direction){
     direction = Vec3.normalize(Vec3.copy(direction));
@@ -373,7 +406,6 @@ Arcball.prototype.onWindowResize = function(e){
 Arcball.prototype.apply = function(){
     this._distance += (this._distanceTarget - this._distance) * this._speed;
 
-    Mat4.fromQuat(this._matrix,this._orientCurr);
     var orient = Quat.set(TEMP_QUAT_0,this._orientCurr);
     orient[3] *= -1;
 
@@ -437,6 +469,19 @@ Arcball.prototype.isDragging = function(){
 
 Arcball.prototype.isConstrained = function(){
     return this._constrain;
+};
+
+Arcball.prototype.getState = function(){
+    return [this._camera.getPosition(),this._camera.getTarget(),this._camera.getUp(),this._interactive];
+};
+
+Arcball.prototype.loadState = function(state){
+    if(state.length !== 4){
+        throw new Error('Invalid state.');
+    }
+    this._camera.lookAt(state[0],state[1],state[2]);
+    this._interactive = state[3];
+    this.setCamera(this._camera);
 };
 
 module.exports = Arcball;
