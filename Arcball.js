@@ -446,7 +446,7 @@ Arcball.prototype.apply = function(){
 
     this._camera.lookAt(position,target,up);
 
-    this._zoom = this._distance == this._distancePrev;
+    this._zoom = this._distance != this._distancePrev;
     this._distancePrev = this._distance;
 };
 
@@ -469,6 +469,10 @@ Arcball.prototype.isDragging = function(){
 
 Arcball.prototype.isConstrained = function(){
     return this._constrain;
+};
+
+Arcball.prototype.isActive = function(){
+    return this._pan || this._zoom || this._drag || this._constrain;
 };
 
 Arcball.prototype.getState = function(){
