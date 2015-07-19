@@ -475,7 +475,7 @@ Arcball.prototype.getState = function(){
     return [this._camera.getPosition(),this._camera.getTarget(),this._camera.getUp(),this._interactive];
 };
 
-Arcball.prototype.loadState = function(state){
+Arcball.prototype.setState = function(state){
     if(state.length !== 4){
         throw new Error('Invalid state.');
     }
