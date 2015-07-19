@@ -7,6 +7,7 @@ var STR_ERROR_NOT_IMPLEMENTED = '%s not implemented.';
 
 var Y_AXIS    = Vec3.yAxis();
 var TEMP_VEC4 = Vec4.create();
+var TEMP_MAT4 = Mat4.create();
 
 function CameraAbstract(){
     this._position = [0,0,5];
@@ -26,9 +27,11 @@ function CameraAbstract(){
 
     this._matrixProjection = Mat4.create();
     this._matrixView       = Mat4.create();
+    this._matrixViewInv    = Mat4.create();
 
     this._matrixProjectionDirty = true;
     this._matrixViewDirty       = true;
+    this._matrixViewInvDirty    = true;
 }
 
 CameraAbstract.prototype.setTarget = function(target){
@@ -106,6 +109,7 @@ CameraAbstract.prototype._updateViewMatrix = function(){
     }
     Mat4.lookAt(this._matrixView, this._position,this._target,this._up);
     this._matrixViewDirty = false;
+    this._matrixViewInvDirty = true;
 };
 
 CameraAbstract.prototype.getProjectionMatrix = function(){
@@ -116,6 +120,16 @@ CameraAbstract.prototype.getProjectionMatrix = function(){
 CameraAbstract.prototype.getViewMatrix = function(){
     this._updateViewMatrix();
     return this._matrixView;
+};
+
+CameraAbstract.prototype.getInverseViewMatrix = function(out){
+    this._updateViewMatrix();
+    if(this._matrixViewInvDirty){
+        Mat4.invert(Mat4.set(this._matrixViewInv,this._matrixView));
+        this._matrixViewInvDirty = false;
+    }
+    out = out === undefined ? TEMP_MAT4 : out;
+    return Mat4.set(out,this._matrixViewInv);
 };
 
 CameraAbstract.prototype.setFrustumOffset = function(x, y, width, height, widthTotal, heightTotal){
