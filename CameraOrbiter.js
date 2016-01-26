@@ -19,4 +19,4 @@ CameraOrbiter.prototype.onMouseWheel = function(){
 };
 
 
-module.exports = CameraArcball;
+module.exports = CameraOrbiter;
