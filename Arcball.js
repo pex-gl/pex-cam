@@ -396,8 +396,10 @@ Arcball.prototype.onMouseScroll = function(e){
 };
 
 Arcball.prototype.onWindowResize = function(e){
-    var width  = e.width;
-    var height = e.height;
+    var win = e.getSender()
+    var width  = win.getWidth();
+    var height = win.getHeight();
+    console.log('Arcball.onWindowResize', width, height)
     Vec2.set2(this._boundsSize,width,height);
     Vec2.set2(this._center, width * 0.5, height * 0.5);
     this._updateRadius();
