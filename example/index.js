@@ -8,7 +8,7 @@ const glsl = require('glslify')
 const cube = createCube()
 
 const projectionMatrix = Mat4.perspective([], 60, 1280 / 720, 0.1, 100)
-const viewMatrix = Mat4.lookAt([], [3, 3, 3], [0, 0, 0], [0, 1, 0])
+const viewMatrix = Mat4.lookAt([], [2, 2, 2], [0, 0, 0], [0, 1, 0])
 const modelMatrix = Mat4.create()
 
 const drawCube = regl({
@@ -60,7 +60,7 @@ const drawCube = regl({
 
 regl.frame(() => {
   regl.clear({
-    color: [1, 0, 0, 1],
+    color: [0.2, 0.2, 0.2, 1],
     depth: 1
   })
   drawCube()
