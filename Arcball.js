@@ -1,493 +1,227 @@
-var Vec2  = require('pex-math/Vec2');
-var Vec3  = require('pex-math/Vec3');
-var Mat4  = require('pex-math/Mat4');
-var Quat  = require('pex-math/Quat');
-var Plane = require('pex-geom/Plane');
+const Vec2 = require('pex-math/Vec2')
+const Vec3 = require('pex-math/Vec3')
+const Mat4 = require('pex-math/Mat4')
+const Quat = require('pex-math/Quat')
+const Ray = require('pex-geom/Ray')
+const clamp = require('pex-math/Utils').clamp
 
-//https://www.talisman.org/~erlkonig/misc/shoemake92-arcball.pdf
-
-var DEFAULT_RADIUS_SCALE = 1.0;
-var DEFAULT_SPEED = 0.35;
-var DEFAULT_DISTANCE_STEP = 0.05;
-
-var TEMP_VEC2_0 = Vec2.create();
-var TEMP_VEC2_1 = Vec2.create();
-var TEMP_VEC3_0 = Vec3.create();
-var TEMP_VEC3_1 = Vec3.create();
-var TEMP_VEC3_2 = Vec3.create();
-var TEMP_QUAT_0 = Quat.create();
-var TEMP_QUAT_1 = Quat.create();
-
-var X_AXIS = [1,0,0];
-var Y_AXIS = [0,1,0];
-var Z_AXIS = [0,0,1];
-
-var ConstrainAxisMode = {
-    NONE   : -1,
-    CAMERA : 0,
-    WORLD  : 1
-};
-
-//http://jsperf.com/quaternion-slerp-implementations
-//modified to prevent taking shortest path
-function slerpLongest(a,b,t){
-    var ax = a[0];
-    var ay = a[1];
-    var az = a[2];
-    var aw = a[3];
-    var bx = b[0];
-    var by = b[1];
-    var bz = b[2];
-    var bw = b[3];
-
-    var omega, cosom, sinom, scale0, scale1;
-
-    cosom = ax * bx + ay * by + az * bz + aw * bw;
-
-    if ( (1.0 - cosom) > 0.000001 ) {
-        omega  = Math.acos(cosom);
-        sinom  = Math.sin(omega);
-        scale0 = Math.sin((1.0 - t) * omega) / sinom;
-        scale1 = Math.sin(t * omega) / sinom;
-    } else {
-        scale0 = 1.0 - t;
-        scale1 = t;
-    }
-
-    a[0] = scale0 * ax + scale1 * bx;
-    a[1] = scale0 * ay + scale1 * by;
-    a[2] = scale0 * az + scale1 * bz;
-    a[3] = scale0 * aw + scale1 * bw;
-
-    return a;
+function getViewRay (camera, x, y, windowWidth, windowHeight) {
+  const hNear = 2 * Math.tan(camera.fov / 2) * camera.near
+  const wNear = hNear * camera.aspect
+  let px = (x - windowWidth / 2) / (windowWidth / 2)
+  let py = -(y - windowHeight / 2) / (windowHeight / 2)
+  px *= wNear / 2
+  py *= hNear / 2
+  const origin = [0, 0, 0]
+  const direction = Vec3.normalize([px, py, -camera.near])
+  return [origin, direction]
 }
 
-function Arcball(camera, windowWidth, windowHeight){
-    this._camera = null;;
+// TOOD: issues to consider
+// - using canvas element instead of window for events
+// = should arcball update Camera aspect ratio?
+// - window resizing
+// - fullscreen vs local canvas
+// - scroll prevention
+// - retina display
+// - touch events
+// - event priority
+// - setting current arcball orientation by setting camera position
+// - camera position change detection
+function createArcball (opts) {
+  const distance = Vec3.distance(opts.camera.position, opts.camera.target)
 
-    this._boundsSize = [windowWidth,windowHeight];
-    this._center     = [windowWidth * 0.5, windowHeight * 0.5];
+  // TODO: split into internal state and public state
+  const state = {
+    camera: opts.camera,
+    invViewMatrix: Mat4.create(),
+    dragging: false,
+    elem: window,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    radius: Math.min(window.innerWidth / 2, window.innerHeight / 2),
+    center: [window.innerWidth / 2, window.innerHeight / 2],
+    currRot: Quat.fromMat4(Quat.create(), opts.camera.viewMatrix),
+    clickRot: [0, 0, 0, 1],
+    dragRot: [0, 0, 0, 1],
+    clickPos: [0, 0, 0],
+    clickPosWindow: [0, 0],
+    dragPos: [0, 0, 0],
+    dragPosWindow: [0, 0],
+    rotAxis: [0, 0, 0],
+    distance: distance,
+    minDistance: distance / 2,
+    maxDistance: distance * 2,
+    zoom: true,
+    enabled: true,
+    clickTarget: [0, 0, 0],
+    clickPosPlane: [0, 0, 0],
+    dragPosPlane: [0, 0, 0],
+    clickPosWorld: [0, 0, 0],
+    dragPosWorld: [0, 0, 0]
+  }
 
-    this._radius      = null;
-    this._radiusScale = null;
-    this.setRadiusScale(DEFAULT_RADIUS_SCALE);
+  Object.assign(state, opts)
 
-    this._speed = null;
-    this.setSpeed(DEFAULT_SPEED);
+  function arcball (opts) {
+    // TODO recompute on state change
+    return Object.assign(arcball, state, opts)
+  }
 
-    this._zoom = false;
+  function updateWindowSize () {
+    if (window.innerWidth !== state.width) {
+      state.width = window.innerWidth
+      state.height = window.innerHeight
+      state.radius = Math.min(state.width / 2, state.height / 2)
+      state.center = [state.width / 2, state.height / 2]
+    }
+  }
 
-    this._distanceStep   = DEFAULT_DISTANCE_STEP;
-    this._distance       = 0;
-    this._distancePrev   = 0;
-    this._distanceTarget = 0;
-    this._distanceMax    = Number.MAX_VALUE;
-    this._distanceMin    = Number.MIN_VALUE;
+  function updateCamera () {
+    // instad of rotating the object we want to move camera around it
+    state.currRot[3] *= -1
 
-    this._drag = false;
+    const position = state.camera.position
+    const target = state.camera.target
+    const up = state.camera.up
+    const distance = state.distance
 
-    this._posDown    = Vec2.create();
-    this._posDrag    = Vec2.create();
-    this._posDownPtr = Vec3.create();
-    this._posDragPtr = Vec3.create();
-    this._posMovePtr = Vec3.create();
+    // set new camera position according to the current
+    // rotation at distance relative to target
+    Vec3.set3(position, 0, 0, distance)
+    Vec3.multQuat(position, state.currRot)
+    Vec3.add(position, target)
 
-    this._orientCurr   = Quat.create();
-    this._orientDown   = Quat.create();
-    this._orientDrag   = Quat.create();
-    this._orientTarget = Quat.create();
+    Vec3.set3(up, 0, 1, 0)
+    Vec3.multQuat(up, state.currRot)
 
-    this._pan = false;
+    state.camera({
+      position: position,
+      target: target,
+      up: up
+    })
 
-    this._targetCameraView          = Vec3.create();
-    this._targetCameraWorld         = Vec3.create();
-    this._targetCameraWorldOriginal = Vec3.create();
+    // roll back rotation flip
+    state.currRot[3] *= -1
+  }
 
-    this._planeTargetView   = Plane.create();
-    this._planeTargetWorld  = Plane.create();
+  function mouseToSphere (x, y, out) {
+    y = state.height - y
+    out[0] = (x - state.center[0]) / state.radius
+    out[1] = (y - state.center[1]) / state.radius
+    const dist = out[0] * out[0] + out[1] * out[1]
+    if (dist > 1) {
+      Vec3.normalize(out)
+    } else {
+      out[2] = Math.sqrt(1 - dist)
+    }
+    return out
+  }
 
-    this._planePosDownView = Vec3.create();
-    this._planePosDragView = Vec3.create();
+  function down (x, y, shift) {
+    state.dragging = true
+    mouseToSphere(x, y, state.clickPos)
+    Quat.set(state.clickRot, state.currRot)
+    updateCamera()
+    if (shift) {
+      Vec2.set2(state.clickPosWindow, x, y)
+      Vec3.set(state.clickTarget, state.camera.target)
+      const targetInViewSpace = Vec3.multMat4(Vec3.copy(state.clickTarget), state.camera.viewMatrix)
+      state.panPlane = [targetInViewSpace, [0, 0, 1]]
+      Ray.hitTestPlane(
+        getViewRay(state.camera, state.clickPosWindow[0], state.clickPosWindow[1], state.width, state.height),
+        state.panPlane[0],
+        state.panPlane[1],
+        state.clickPosPlane
+      )
+      Ray.hitTestPlane(
+        getViewRay(state.camera, state.dragPosWindow[0], state.dragPosWindow[1], state.width, state.height),
+        state.panPlane[0],
+        state.panPlane[1],
+        state.dragPosPlane
+      )
+    } else {
+      state.panPlane = null
+    }
+  }
 
-    this._planePosDownWorld = Vec3.create();
-    this._planePosDragWorld = Vec3.create();
+  function move (x, y, shift) {
+    if (!state.dragging) {
+      return
+    }
+    if (shift && state.panPlane) {
+      Vec2.set2(state.dragPosWindow, x, y)
+      Ray.hitTestPlane(
+        getViewRay(state.camera, state.clickPosWindow[0], state.clickPosWindow[1], state.width, state.height),
+        state.panPlane[0],
+        state.panPlane[1],
+        state.clickPosPlane
+      )
+      Ray.hitTestPlane(
+        getViewRay(state.camera, state.dragPosWindow[0], state.dragPosWindow[1], state.width, state.height),
+        state.panPlane[0],
+        state.panPlane[1],
+        state.dragPosPlane
+      )
+      Mat4.set(state.invViewMatrix, state.camera.viewMatrix)
+      Mat4.invert(state.invViewMatrix)
+      Vec3.multMat4(Vec3.set(state.clickPosWorld, state.clickPosPlane), state.invViewMatrix)
+      Vec3.multMat4(Vec3.set(state.dragPosWorld, state.dragPosPlane), state.invViewMatrix)
+      const diffWorld = Vec3.sub(Vec3.copy(state.dragPosWorld), state.clickPosWorld)
+      const target = Vec3.sub(Vec3.copy(state.clickTarget), diffWorld)
+      state.camera({ target: target })
+    } else {
+      mouseToSphere(x, y, state.dragPos)
+      Vec3.set(state.rotAxis, state.clickPos)
+      Vec3.cross(state.rotAxis, state.dragPos)
+      const theta = Vec3.dot(state.clickPos, state.dragPos)
+      Quat.set4(state.dragRot, state.rotAxis[0], state.rotAxis[1], state.rotAxis[2], theta)
+      Quat.set(state.currRot, state.dragRot)
+      Quat.mult(state.currRot, state.clickRot)
+      updateCamera()
+    }
+  }
 
-    this._constrain           = false;
-    this._constrainAxes       = [Vec3.copy(X_AXIS), Vec3.copy(Y_AXIS), Vec3.copy(Z_AXIS)];
-    this._constrainAxisIndex  = 1;
-    this._constrainMode       = ConstrainAxisMode.WORLD;
-    this._constrainModePrev   = -1;
+  function up () {
+    state.dragging = false
+    state.panPlane = null
+  }
 
-    this._interactive = true;
+  function scroll (dy) {
+    if (!state.zoom) {
+      return
+    }
+    state.distance = state.distance + dy / 100
+    state.distance = clamp(state.distance, state.minDistance, state.maxDistance)
+    updateCamera()
+  }
 
-    this._updateRadius();
-    this.setCamera(camera);
+  function onMouseDown (e) {
+    updateWindowSize()
+    down(e.clientX, e.clientY, e.shiftKey)
+  }
+
+  function onMouseMove (e) {
+    move(e.clientX, e.clientY, e.shiftKey)
+  }
+
+  function onMouseUp (e) {
+    up()
+  }
+
+  function onMouseScroll (e) {
+    const dy = -e.wheelDelta / 10 || e.detail / 10
+    scroll(dy)
+    e.preventDefault()
+  }
+
+  const mouseWheelEvent = /Firefox/i.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel'
+  window.addEventListener('mousedown', onMouseDown)
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
+  window.addEventListener(mouseWheelEvent, onMouseScroll)
+
+  return arcball(opts)
 }
 
-Arcball.prototype.setCamera = function(camera){
-    this._camera         = camera;
-    this._distance       = camera.getDistance();
-    this._distancePrev   = this._distance;
-    this._distanceTarget = this._distance;
-
-    Vec2.toZero(this._posDown);
-    Vec2.toZero(this._posDrag);
-    Vec3.toZero(this._posDownPtr);
-    Vec3.toZero(this._posDragPtr);
-    Vec3.toZero(this._posMovePtr);
-
-    Quat.fromMat4(this._orientCurr,camera.getViewMatrix());
-    Quat.identity(this._orientDown);
-    Quat.identity(this._orientDrag);
-    Quat.set(this._orientTarget,this._orientCurr);
-
-    Vec3.toZero(this._targetCameraView);
-    Vec3.toZero(this._targetCameraWorld);
-    Vec3.set(this._targetCameraWorldOriginal,camera.getTarget());
-
-    Vec3.set3(this._planeTargetView[0],0,0,0);
-    Vec3.set3(this._planeTargetView[1],0,1,0);
-
-    Vec3.set3(this._planeTargetWorld[0],0,0,0);
-    Vec3.set3(this._planeTargetWorld[1],0,1,0);
-
-    Vec3.toZero(this._planePosDownView);
-    Vec3.toZero(this._planePosDragView);
-
-    Vec3.toZero(this._planePosDownWorld);
-    Vec3.toZero(this._planePosDragWorld);
-};
-
-Arcball.prototype.setLookDirection = function(direction){
-    direction = Vec3.normalize(Vec3.copy(direction));
-    var orientation = Quat.fromDirection(Quat.create(),direction);
-    Quat.set(this._orientTarget,Quat.normalize(Quat.invert(orientation)));
-};
-
-Arcball.prototype.getBoundsSize = function(out){
-    out = out === undefined ? Vec2.create() : out;
-    return Vec2.set(out,this._boundsSize);
-};
-
-Arcball.prototype.setDistanceMin = function(min){
-    this._distanceMin = min;
-};
-
-Arcball.prototype.setDistanceMax = function(max){
-    this._distanceMax = max;
-};
-
-Arcball.prototype.setDistance = function(distance){
-    this._distanceTarget = distance;
-};
-
-Arcball.prototype.getDistance = function(){
-    return this._distance;
-};
-
-Arcball.prototype.setRadiusScale = function(scale){
-    this._radiusScale = 1.0 / (1.0 / (scale === undefined ? DEFAULT_RADIUS_SCALE : scale) * 2);
-    this._updateRadius();
-};
-
-Arcball.prototype.getRadiusScale = function(){
-    return this._radiusScale;
-};
-
-Arcball.prototype.setSpeed = function(speed){
-    this._speed = speed;
-};
-
-Arcball.prototype.getSpeed = function(){
-    return this._speed;
-};
-
-Arcball.prototype.enable = function(){
-    this._interactive = true;
-};
-
-Arcball.prototype.disable = function(){
-    this._interactive = false;
-};
-
-Arcball.prototype.isEnabled = function(){
-    return this._interactive;
-};
-
-Arcball.prototype._updateModifierInput = function(e){
-    this._constrainModePrev = this._constrainMode;
-    this._constrainMode     = e.shiftKey && e.ctrlKey ? ConstrainAxisMode.CAMERA : e.shiftKey && e.altKey ? ConstrainAxisMode.WORLD : ConstrainAxisMode.NONE;
-    this._constrain         = this._constrainMode != ConstrainAxisMode.NONE;
-    this._pan               = e.shiftKey && !this._constrain
-};
-
-Arcball.prototype._updateRadius = function(){
-    var boundsSize = this._boundsSize;
-    this._radius = Math.min(boundsSize[0],boundsSize[1]) * this._radiusScale;
-};
-
-Arcball.prototype._mapSphere = function(pos,constrain){
-    pos       = Vec2.set(TEMP_VEC2_0,pos);
-    constrain = this._constrain && (constrain || constrain === undefined);
-
-    var dir = this._distance < 0 ? -1 : 1;
-
-    pos = Vec2.sub(pos,this._center);
-    pos = Vec2.scale(pos, 1.0 / this._radius);
-    pos = Vec3.set3(TEMP_VEC2_1,pos[0],pos[1] * dir, 0);
-
-    var r = Vec3.lengthSq(pos);
-    if(r > 1.0){
-        Vec3.normalize(pos);
-    }
-    else{
-        pos[2] = Math.sqrt(1 - r);
-    }
-
-    if(constrain){
-        this._constrainToAxis(pos,this._constrainAxes[this._constrainAxisIndex]);
-    }
-
-    return pos;
-};
-
-Arcball.prototype._constrainToAxis = function(pos, axis){
-    var dot  = Vec3.dot(pos,axis);
-    var proj = Vec3.sub(pos,Vec3.scale(Vec3.set(TEMP_VEC3_2,axis),dot));
-    var norm = Vec3.length(proj);
-
-    if(norm > 0){
-        if(proj[2] < 0.0){
-            Vec3.invert(proj);
-        }
-        Vec3.normalize(pos);
-    } else if(axis[2] == 1.0){
-        Vec3.set3(pos,1,0,0);
-    } else {
-        Vec3.set3(pos,-axis[1],axis[0],0);
-    }
-    return pos;
-};
-
-//Graphics Gems IV, Page 177, Ken Shoemake
-Arcball.prototype._updateNearestAxis = function(pos){
-    if(!this._constrain){
-        return;
-    }
-
-    var constrainAxes = this._constrainAxes;
-
-    var max = -1;
-    var index  = 0;
-
-    for(var i = 0, l = constrainAxes.length, point, dot; i < l; ++i){
-        point = this._constrainToAxis(Vec3.set(TEMP_VEC3_0,pos), constrainAxes[i]);
-        dot   = Vec3.dot(point, pos);
-        if(dot > max){
-            index = i;
-            max = dot;
-        }
-    }
-    this._constrainAxisIndex = index;
-};
-
-Arcball.prototype.onMouseDown = function(e){
-    if(!this._interactive){
-        return;
-    }
-
-    this._updateModifierInput(e);
-    this._drag = false;
-
-    var boundsHeight = this._boundsSize[1];
-    var mousePos     = Vec2.set2(TEMP_VEC2_0, e.x, e.y);
-    this._posDown    = Vec2.set(this._posDown, mousePos);
-
-    var pos = Vec2.set2(TEMP_VEC2_0, mousePos[0],boundsHeight - mousePos[1]);
-
-    Vec3.set(this._posDownPtr, this._mapSphere(pos));
-    Quat.set(this._orientDown, this._orientCurr);
-    Quat.identity(this._orientDrag);
-
-    if(this._pan){
-
-        Vec3.set(this._targetCameraWorld,this._camera.getTarget());
-        Vec3.multMat4(Vec3.set(this._targetCameraView,this._targetCameraWorld),this._camera.getViewMatrix());
-
-        Vec3.set(this._planeTargetView[0],this._targetCameraView);
-        Vec3.set(this._planeTargetView[1],Z_AXIS);
-
-        Vec3.multMat4(Vec3.set(this._planeTargetWorld[1],this._planeTargetView[1]),this._camera.getInverseViewMatrix());
-    }
-};
-
-Arcball.prototype.onMouseDrag = function(e){
-    if(!this._interactive){
-        return;
-    }
-
-    this._updateModifierInput(e);
-    this._drag = true;
-
-    var boundsWidth  = this._boundsSize[0];
-    var boundsHeight = this._boundsSize[1];
-    var mousePos     = Vec2.set2(TEMP_VEC2_0, e.x, e.y);
-
-    this._posDrag = Vec2.set(this._posDrag,mousePos);
-
-    if(this._pan){
-        Plane.getRayIntersection(this._planeTargetView,this._camera.getViewRay(this._posDown,boundsWidth,boundsHeight),this._planePosDownView);
-        Plane.getRayIntersection(this._planeTargetView,this._camera.getViewRay(this._posDrag,boundsWidth,boundsHeight),this._planePosDragView);
-
-        var invViewMatrix = this._camera.getInverseViewMatrix();
-
-        Vec3.multMat4(Vec3.set(this._planePosDownWorld,this._planePosDownView),invViewMatrix);
-        Vec3.multMat4(Vec3.set(this._planePosDragWorld,this._planePosDragView),invViewMatrix);
-
-        var targetCameraWorld = Vec3.set(TEMP_VEC3_0,this._targetCameraWorld);
-        var planePosDragWorld = Vec3.set(TEMP_VEC3_1,this._planePosDragWorld);
-        var planePosDelta     = Vec3.sub(planePosDragWorld,this._planePosDownWorld);
-
-        this._camera.setTarget(Vec3.sub(targetCameraWorld,planePosDelta));
-    }
-    else {
-        var pos = Vec2.set2(TEMP_VEC2_0, mousePos[0], boundsHeight - mousePos[1]);
-
-        var posDownPtr = this._posDownPtr;
-        var posDragPtr = Vec3.set(this._posDragPtr,this._mapSphere(pos));
-        var temp       = Vec3.cross(Vec3.set(Vec3.create(),posDownPtr), posDragPtr);
-
-        Quat.set4(this._orientDrag,temp[0],temp[1],temp[2],Vec3.dot(posDownPtr,posDragPtr));
-        Quat.normalize(this._orientDrag);
-        Quat.set(this._orientTarget, this._orientDrag);
-        Quat.mult(this._orientTarget, this._orientDown);
-    }
-};
-
-Arcball.prototype.onMouseMove = function(e){
-    this._updateModifierInput(e);
-    var pos = Vec2.set2(TEMP_VEC2_0, e.x, this._boundsSize[1] - e.y);
-    Vec3.set(this._posMovePtr,this._mapSphere(pos,false));
-};
-
-Arcball.prototype.onKeyPress = function(e){
-    this._updateModifierInput(e);
-};
-
-Arcball.prototype.onKeyUp = function(){
-    this._constrain = false;
-};
-
-Arcball.prototype.onMouseUp = function(e){
-    this._constrain = !e.shiftKey ? false : this._constrain;
-    this._drag = false;
-};
-
-Arcball.prototype.onMouseScroll = function(e){
-    if(!this._interactive){
-        return;
-    }
-    var direction = e.dy < 0 ? -1 : e.dy > 0 ? 1 : 0;
-    if(direction == 0){
-        return;
-    }
-    this._distanceTarget += direction * -1 * this._distanceStep * (e.altKey ? 2.0 : 1.0);
-    this._distanceTarget  = Math.max(this._distanceMin, Math.min(this._distanceTarget,this._distanceMax));
-};
-
-Arcball.prototype.onWindowResize = function(e){
-    var win = e.getSender()
-    var width  = win.getWidth();
-    var height = win.getHeight();
-    console.log('Arcball.onWindowResize', width, height)
-    Vec2.set2(this._boundsSize,width,height);
-    Vec2.set2(this._center, width * 0.5, height * 0.5);
-    this._updateRadius();
-};
-
-Arcball.prototype.apply = function(){
-    this._distance += (this._distanceTarget - this._distance) * this._speed;
-
-    var orient = Quat.set(TEMP_QUAT_0,this._orientCurr);
-    orient[3] *= -1;
-
-    if(this._constrain){
-        Quat.slerp(this._orientCurr,this._orientTarget,this._speed);
-
-        if(!this._drag){
-            switch (this._constrainMode){
-                case ConstrainAxisMode.CAMERA :
-                    if(this._constrainMode != this._constrainModePrev){
-                        Vec3.set(this._constrainAxes[0],X_AXIS);
-                        Vec3.set(this._constrainAxes[1],Y_AXIS);
-                        Vec3.set(this._constrainAxes[2],Z_AXIS);
-                    }
-                    break;
-                case ConstrainAxisMode.WORLD :
-                    var orientWorld = Quat.invert(Quat.set(TEMP_QUAT_1,orient));
-
-                    Vec3.set(this._constrainAxes[0],X_AXIS);
-                    Vec3.set(this._constrainAxes[1],Y_AXIS);
-                    Vec3.set(this._constrainAxes[2],Z_AXIS);
-                    Vec3.multQuat(this._constrainAxes[0],orientWorld);
-                    Vec3.multQuat(this._constrainAxes[1],orientWorld);
-                    Vec3.multQuat(this._constrainAxes[2],orientWorld);
-                    break;
-            }
-        }
-    } else {
-        slerpLongest(this._orientCurr,this._orientTarget,this._speed);
-    }
-
-    this._updateNearestAxis(this._posMovePtr);
-
-    var target   = this._camera.getTarget();
-    var offset   = Vec3.multQuat(Vec3.set3(TEMP_VEC3_0,0,0,this._distance),orient);
-    var position = Vec3.add(Vec3.set(TEMP_VEC3_1,target),offset);
-    var up       = Vec3.multQuat(Vec3.set(TEMP_VEC3_0,Y_AXIS),orient);
-
-    this._camera.lookAt(position,target,up);
-
-    this._zoom = this._distance != this._distancePrev;
-    this._distancePrev = this._distance;
-};
-
-Arcball.prototype.resetPanning = function(){
-    this._camera.setTarget(this._targetCameraWorldOriginal);
-    this._pan = false;
-};
-
-Arcball.prototype.isPanning = function(){
-    return this._pan;
-};
-
-Arcball.prototype.isZooming = function(){
-    return this._zoom;
-};
-
-Arcball.prototype.isDragging = function(){
-    return this._drag;
-};
-
-Arcball.prototype.isConstrained = function(){
-    return this._constrain;
-};
-
-Arcball.prototype.isActive = function(){
-    return this._pan || this._zoom || this._drag || this._constrain;
-};
-
-Arcball.prototype.getState = function(){
-    return [this._camera.getPosition(),this._camera.getTarget(),this._camera.getUp(),this._interactive];
-};
-
-Arcball.prototype.setState = function(state){
-    if(state.length !== 4){
-        throw new Error('Invalid state.');
-    }
-    this._camera.lookAt(state[0],state[1],state[2]);
-    this._interactive = state[3];
-    this.setCamera(this._camera);
-};
-
-module.exports = Arcball;
+module.exports = createArcball
