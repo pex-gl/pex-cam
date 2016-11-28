@@ -19,14 +19,20 @@
     "email": "hwollik@hotmail.com",
     "url": "http://henrykwollik.com"
   },
-  "contributors": [{
+  "contributors": [
+    {
       "name": "Marcin Ignac",
       "email": "marcin.ignac@gmail.com",
       "url": "http://marcinignac.com"
-  }],
+    }
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/pex-gl/pex-cam/issues"
   },
-  "homepage": "https://github.com/pex-gl/pex-cam"
+  "homepage": "https://github.com/pex-gl/pex-cam",
+  "dependencies": {
+    "pex-geom": "^1.0.0",
+    "pex-math": "^1.0.1"
+  }
 }
