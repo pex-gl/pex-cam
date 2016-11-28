@@ -11,6 +11,23 @@ const projectionMatrix = Mat4.perspective([], 60, window.innerWidth / window.inn
 const viewMatrix = Mat4.lookAt([], [2, 2, 2], [0, 0, 0], [0, 1, 0])
 const modelMatrix = Mat4.create()
 
+// const camera = require('pex-cam/3d')({
+// const camera = require('pex-cam/persp')({
+// const camera = require('pex-cam/perspective')({
+// const camera = require('../perspective')({
+  // position: [2, 2, 2],
+  // target: [0, 0, 0],
+  // up: [0, 1, 0],
+  // fov: Math.PI / 3, // NEW: (rename to correct name: fovy?), radians not degrees
+  // aspect: gl.canvas.width / gl.canvas.height,
+  // near: 0.1,
+  // far: 100
+// })
+
+// NOTES:
+// - regl camera recomputes projectionMatrix every frame based on aspect
+//   ratio from context.viewportWidth / context.viewportHeight<Paste>
+
 const drawCube = regl({
   attributes: {
     aPosition: cube.positions,
@@ -58,12 +75,13 @@ const drawCube = regl({
   }
 })
 
-document.body.style.margin = 0
 window.addEventListener('resize', (e) => {
   gl.canvas.width = window.innerWidth
   gl.canvas.height = window.innerHeight
   Mat4.perspective(projectionMatrix, 60, gl.canvas.width / gl.canvas.height, 0.1, 100)
+  // camera({ aspect: gl.canvas.width / gl.canvas.height })
 })
+
 // i can pass matrices by reference here but i can in drawing command
 // in drawing command the matrix uniforms have to made dynamic to update every frame
 const setupCamera = regl({
@@ -82,3 +100,36 @@ regl.frame(() => {
     drawCube()
   })
 })
+
+/*
+// move this to pex-next
+// reasons for reqrite:
+// - lots of unused code
+// - buggy, leaking pex-context with state stack,
+//   transform stack, shader uniform injection
+// - to much OOP
+// - regl, command buffers
+var createWindow = require('pex-sys/win')
+var win = createWindow()
+var win = require('pex-sys/window')()
+var win = require('pex-window')()
+var regl = require('regl')(win.gl)
+win.on('resize', () => {
+	cameara({ aspect: win.width / win.height })
+})
+win.on('frame', () => {
+})
+
+var win = require('pex-win')(gl.canvas)
+win.on('resize', (e) => {})
+win.on('mousemove', (e) => {})
+win.pointer
+
+var pointer = require('pointer-event-stream')(gl.canvas)
+pointer.on((e) => {}, pointer.move)
+
+var gl = require('pex-gl')()
+gl.on('resize', () => {
+	cameara({ aspect: win.width / win.height })
+})
+*/
