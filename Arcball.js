@@ -210,17 +210,15 @@ function createArcball (opts) {
     up()
   }
 
-  function onMouseScroll (e) {
-    const dy = -e.wheelDelta / 10 || e.detail / 10
-    scroll(dy)
-    e.preventDefault()
+  function onWheel (e) {
+    scroll(e.deltaY * 10)
+    // e.preventDefault()
   }
 
-  const mouseWheelEvent = /Firefox/i.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel'
   window.addEventListener('mousedown', onMouseDown)
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
-  window.addEventListener(mouseWheelEvent, onMouseScroll)
+  window.addEventListener('wheel', onWheel)
 
   return arcball(opts)
 }
