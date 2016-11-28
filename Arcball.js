@@ -1,3 +1,4 @@
+'use strict'
 const Vec2 = require('pex-math/Vec2')
 const Vec3 = require('pex-math/Vec3')
 const Mat4 = require('pex-math/Mat4')
