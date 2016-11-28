@@ -199,11 +199,11 @@ function createArcball (opts) {
 
   function onMouseDown (e) {
     updateWindowSize()
-    down(e.clientX, e.clientY, e.shiftKey)
+    down(e.offsetX, e.offsetY, e.shiftKey)
   }
 
   function onMouseMove (e) {
-    move(e.clientX, e.clientY, e.shiftKey)
+    move(e.offsetX, e.offsetY, e.shiftKey)
   }
 
   function onMouseUp (e) {
