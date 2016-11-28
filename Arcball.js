@@ -213,7 +213,7 @@ function createArcball (opts) {
 
   function onWheel (e) {
     scroll(e.deltaY)
-    // e.preventDefault()
+    e.preventDefault()
   }
 
   window.addEventListener('mousedown', onMouseDown)
