@@ -193,7 +193,7 @@ function createArcball (opts) {
     if (!state.zoom) {
       return
     }
-    state.distance = state.distance + dy / 100
+    state.distance = state.distance - dy / 10
     state.distance = clamp(state.distance, state.minDistance, state.maxDistance)
     updateCamera()
   }
@@ -212,7 +212,7 @@ function createArcball (opts) {
   }
 
   function onWheel (e) {
-    scroll(e.deltaY * 10)
+    scroll(e.deltaY)
     // e.preventDefault()
   }
 
