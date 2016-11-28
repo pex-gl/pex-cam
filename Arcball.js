@@ -171,6 +171,7 @@ function createArcball (opts) {
       const diffWorld = Vec3.sub(Vec3.copy(state.dragPosWorld), state.clickPosWorld)
       const target = Vec3.sub(Vec3.copy(state.clickTarget), diffWorld)
       state.camera({ target: target })
+      updateCamera()
     } else {
       mouseToSphere(x, y, state.dragPos)
       Vec3.set(state.rotAxis, state.clickPos)
