@@ -78,7 +78,7 @@ window.addEventListener('resize', (e) => {
   gl.canvas.width = window.innerWidth
   gl.canvas.height = window.innerHeight
   camera({
-    aspect: gl.canvas.width / gl.canvas.height,
+    aspect: gl.canvas.width / gl.canvas.height
   })
 })
 
