@@ -198,7 +198,7 @@ function createArcball (opts) {
     if (!arcball.zoom) {
       return
     }
-    arcball.distance = arcball.distance - dy / 10
+    arcball.distance = arcball.distance + dy / 50
     arcball.distance = clamp(arcball.distance, arcball.minDistance, arcball.maxDistance)
     updateCamera()
   }

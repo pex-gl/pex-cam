@@ -181,7 +181,7 @@ function createOrbiter (opts) {
     if (!orbiter.zoom) {
       return
     }
-    orbiter.distance = orbiter.distance - dy / 10
+    orbiter.distance = orbiter.distance + dy / 50
     orbiter.distance = clamp(orbiter.distance, orbiter.minDistance, orbiter.maxDistance)
     updateCamera()
   }
