@@ -1,5 +1,5 @@
 'use strict'
-const gl = require('pex-gl')(window.innerWidth * 0.75, window.innerHeight * 0.75)
+const gl = require('pex-gl')(window.innerWidth, window.innerHeight)
 const regl = require('regl')(gl)
 const createCube = require('primitive-cube')
 const glsl = require('glslify')
@@ -19,13 +19,13 @@ const camera = createCamera({
   up: [0, 1, 0]
 })
 
-// const arcball = createArcball({
-  // camera: camera
-// })
-
-const orbiter = createOrbiter({
+const arcball = createArcball({
   camera: camera
 })
+
+// const orbiter = createOrbiter({
+  // camera: camera
+// })
 
 const drawCube = regl({
   attributes: {
