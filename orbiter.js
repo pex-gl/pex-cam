@@ -35,25 +35,22 @@ function xyzToLatLon (normalizedPosition, out) {
 }
 
 function createOrbiter (opts) {
-  const distance = Vec3.distance(opts.camera.position, opts.camera.target)
-  const latLon = xyzToLatLon(Vec3.normalize(Vec3.sub(Vec3.copy(opts.camera.position), opts.camera.target)))
-
   // TODO: split into internal state and public state
-  const initalState = {
+  const initialState = {
     camera: opts.camera,
     invViewMatrix: Mat4.create(),
     dragging: false,
-    lat: latLon[0], // Y
-    lon: latLon[1], // XZ
+    lat: 0, // Y
+    lon: 0, // XZ
     elem: window,
     width: window.innerWidth,
     height: window.innerHeight,
     clickPosWindow: [0, 0],
     dragPos: [0, 0, 0],
     dragPosWindow: [0, 0],
-    distance: distance,
-    minDistance: distance / 10,
-    maxDistance: distance * 10,
+    distance: 1,
+    minDistance: 1,
+    maxDistance: 1,
     zoom: true,
     // enabled: true,
     clickTarget: [0, 0, 0],
@@ -64,11 +61,20 @@ function createOrbiter (opts) {
     panPlane: null
   }
 
-  Object.assign(initalState, opts)
-
   function orbiter (opts) {
-    // TODO recompute on state change
-    return Object.assign(orbiter, opts)
+    Object.assign(orbiter, opts)
+
+    if (opts.camera) {
+      const distance = Vec3.distance(opts.camera.position, opts.camera.target)
+      const latLon = xyzToLatLon(Vec3.normalize(Vec3.sub(Vec3.copy(opts.camera.position), opts.camera.target)))
+      orbiter.lat = latLon[0]
+      orbiter.lon = latLon[1]
+      orbiter.distance = distance
+      orbiter.minDistance = distance / 10
+      orbiter.maxDistance = distance * 10
+    }
+
+    return orbiter
   }
 
   function updateWindowSize () {
@@ -203,7 +209,8 @@ function createOrbiter (opts) {
   window.addEventListener('mouseup', onMouseUp)
   window.addEventListener('wheel', onWheel)
 
-  return orbiter(initalState)
+  Object.assign(orbiter, initialState)
+  return orbiter(opts)
 }
 
 module.exports = createOrbiter
