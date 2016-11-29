@@ -21,9 +21,9 @@ function latLonToXyz (lat, lon, out) {
   out = out || [0, 0, 0]
   const theta = lat
   const phi = lon
-  out[0] = Math.cos(theta) * Math.sin(phi)
+  out[0] = Math.cos(theta) * Math.cos(phi)
   out[1] = Math.sin(theta)
-  out[2] = Math.cos(theta) * Math.cos(phi)
+  out[2] = Math.cos(theta) * Math.sin(phi)
   return out
 }
 
@@ -165,7 +165,7 @@ function createOrbiter (opts) {
       // TODO: how to have resolution independed scaling? will this code behave differently with retina/pixelRatio=2?
       orbiter.lat = clamp(orbiter.lat + dy / 200, -Math.PI / 2, Math.PI / 2)
 
-      orbiter.lon -= dx / 200
+      orbiter.lon += dx / 200
       orbiter.lon = orbiter.lon % (2 * Math.PI)
 
       updateCamera()
@@ -210,7 +210,10 @@ function createOrbiter (opts) {
   window.addEventListener('wheel', onWheel)
 
   Object.assign(orbiter, initialState)
-  return orbiter(opts)
+  var o = orbiter(opts)
+  console.log(orbiter.camera.position)
+  updateCamera()
+  console.log(orbiter.camera.position)
 }
 
 module.exports = createOrbiter
