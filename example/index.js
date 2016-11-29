@@ -19,13 +19,13 @@ const camera = createCamera({
   up: [0, 1, 0]
 })
 
-const arcball = createArcball({
-  camera: camera
-})
-
-// const orbiter = createOrbiter({
+// const arcball = createArcball({
   // camera: camera
 // })
+
+const orbiter = createOrbiter({
+  camera: camera
+})
 
 const drawCube = regl({
   attributes: {
