@@ -100,36 +100,3 @@ regl.frame(() => {
     drawCube()
   })
 })
-
-/*
-// move this to pex-next
-// reasons for reqrite:
-// - lots of unused code
-// - buggy, leaking pex-context with state stack,
-//   transform stack, shader uniform injection
-// - to much OOP
-// - regl, command buffers
-var createWindow = require('pex-sys/win')
-var win = createWindow()
-var win = require('pex-sys/window')()
-var win = require('pex-window')()
-var regl = require('regl')(win.gl)
-win.on('resize', () => {
-	cameara({ aspect: win.width / win.height })
-})
-win.on('frame', () => {
-})
-
-var win = require('pex-win')(gl.canvas)
-win.on('resize', (e) => {})
-win.on('mousemove', (e) => {})
-win.pointer
-
-var pointer = require('pointer-event-stream')(gl.canvas)
-pointer.on((e) => {}, pointer.move)
-
-var gl = require('pex-gl')()
-gl.on('resize', () => {
-	cameara({ aspect: win.width / win.height })
-})
-*/
