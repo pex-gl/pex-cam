@@ -5,6 +5,7 @@ const createCube = require('primitive-cube')
 const glsl = require('glslify')
 const createCamera = require('../perspective')
 const createArcball = require('../arcball')
+const createOrbiter = require('../orbiter')
 const Mat4 = require('pex-math/Mat4')
 const cube = createCube()
 
@@ -18,7 +19,11 @@ const camera = createCamera({
   up: [0, 1, 0]
 })
 
-const arcball = createArcball({
+// const arcball = createArcball({
+  // camera: camera
+// })
+
+const orbiter = createOrbiter({
   camera: camera
 })
 
