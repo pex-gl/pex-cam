@@ -5,7 +5,7 @@ function createPerspectiveCamera (opts) {
   // const viewMatrix = Mat4.lookAt([], [2, 2, 2], [0, 0, 0], [0, 1, 0])
   // const modelMatrix = Mat4.create()
 
-  const state = {
+  const initialState = {
     projectionMatrix: Mat4.create(),
     viewMatrix: Mat4.create(),
     position: [0, 0, 3],
@@ -17,34 +17,34 @@ function createPerspectiveCamera (opts) {
     far: 100
   }
 
-  Object.assign(state, opts)
-
-  function perspectiveCamera (opts) {
-    Object.assign(state, opts)
+  function camera (opts) {
+    Object.assign(camera, opts)
 
     if (opts.position || opts.target || opts.up) {
       Mat4.lookAt(
-        state.viewMatrix,
-        state.position,
-        state.target,
-        state.up
+        camera.viewMatrix,
+        camera.position,
+        camera.target,
+        camera.up
       )
     }
 
     if (opts.fov || opts.aspect || opts.near || opts.far) {
       Mat4.perspective(
-        state.projectionMatrix,
-        state.fov / Math.PI * 180,
-        state.aspect,
-        state.near,
-        state.far
+        camera.projectionMatrix,
+        camera.fov / Math.PI * 180,
+        camera.aspect,
+        camera.near,
+        camera.far
       )
     }
 
-    return Object.assign(perspectiveCamera, state)
+    return camera
   }
 
-  return perspectiveCamera(opts)
+  Object.assign(arcball, initialState)
+
+  return camera(opts)
 }
 
 module.exports = createPerspectiveCamera

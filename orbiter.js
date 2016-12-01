@@ -210,10 +210,8 @@ function createOrbiter (opts) {
   window.addEventListener('wheel', onWheel)
 
   Object.assign(orbiter, initialState)
-  var o = orbiter(opts)
-  console.log(orbiter.camera.position)
-  updateCamera()
-  console.log(orbiter.camera.position)
+
+  return orbiter(opts)
 }
 
 module.exports = createOrbiter

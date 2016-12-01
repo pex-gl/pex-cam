@@ -227,6 +227,7 @@ function createArcball (opts) {
   window.addEventListener('wheel', onWheel)
 
   Object.assign(arcball, initialState)
+
   return arcball(opts)
 }
 
