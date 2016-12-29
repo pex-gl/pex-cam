@@ -42,7 +42,7 @@ function createPerspectiveCamera (opts) {
     return camera
   }
 
-  Object.assign(arcball, initialState)
+  Object.assign(camera, initialState)
 
   return camera(opts)
 }
