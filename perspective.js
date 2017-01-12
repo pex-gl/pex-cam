@@ -1,5 +1,34 @@
 const Mat4 = require('pex-math/Mat4')
 
+function setFrustumOffset (camera, x, y, width, height, widthTotal, heightTotal) {
+  // console.log('frustum', x, y, width, height, widthTotal, heightTotal)
+  widthTotal = widthTotal === undefined ? width : widthTotal
+  heightTotal = heightTotal === undefined ? height : heightTotal
+
+  var near = camera.near
+  var far = camera.far
+  var fov = camera.fov
+
+  var aspectRatio = widthTotal / heightTotal
+
+  var top = Math.tan(fov * 0.5) * near
+  var bottom = -top
+  var left = aspectRatio * bottom
+  var right = aspectRatio * top
+  var width_ = Math.abs(right - left)
+  var height_ = Math.abs(top - bottom)
+  var widthNormalized = width_ / widthTotal
+  var heightNormalized = height_ / heightTotal
+
+  var l = left + x * widthNormalized
+  var r = left + (x + width) * widthNormalized
+  var b = top - (y + height) * heightNormalized
+  var t = top - y * heightNormalized
+
+  camera.aspect = aspectRatio
+  Mat4.frustum(camera.projectionMatrix, l, r, b, t, near, far)
+}
+
 function createPerspectiveCamera (opts) {
   // const projectionMatrix = Mat4.perspective([], 60, gl.canvas.width / gl.canvas.height, 0.1, 100)
   // const viewMatrix = Mat4.lookAt([], [2, 2, 2], [0, 0, 0], [0, 1, 0])
@@ -39,6 +68,18 @@ function createPerspectiveCamera (opts) {
       )
     }
 
+    if (camera.frustum) {
+      // console.log('pex-cam:perspective', 'setting frustum', camera.frustum)
+      // console.log('pex-cam:perspective', 'setting frustum before', camera.projectionMatrix)
+      setFrustumOffset(
+        camera,
+        camera.frustum.offset[0], camera.frustum.offset[1],
+        camera.frustum.size[0], camera.frustum.size[1],
+        camera.frustum.totalSize[0], camera.frustum.totalSize[1]
+      )
+      // console.log('pex-cam:perspective', 'setting frustum after', camera.projectionMatrix)
+    }
+
     return camera
   }
 
@@ -48,3 +89,4 @@ function createPerspectiveCamera (opts) {
 }
 
 module.exports = createPerspectiveCamera
+
