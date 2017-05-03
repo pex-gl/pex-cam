@@ -20,11 +20,13 @@ const camera = createCamera({
 })
 
 // const arcball = createArcball({
-  // camera: camera
+  // camera: camera,
+  // element: gl.canvas
 // })
 
 const orbiter = createOrbiter({
-  camera: camera
+  camera: camera,
+  element: gl.canvas
 })
 
 const drawCube = regl({
