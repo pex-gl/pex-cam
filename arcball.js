@@ -34,7 +34,7 @@ function createArcball (opts) {
     camera: opts.camera,
     invViewMatrix: Mat4.create(),
     dragging: false,
-    elem: window,
+    element: opts.element || window,
     width: window.innerWidth,
     height: window.innerHeight,
     radius: Math.min(window.innerWidth / 2, window.innerHeight / 2),
@@ -75,9 +75,11 @@ function createArcball (opts) {
   }
 
   function updateWindowSize () {
-    if (window.innerWidth !== arcball.width) {
-      arcball.width = window.innerWidth
-      arcball.height = window.innerHeight
+    const width = arcball.element.clientWidth || arcball.element.innerWidth
+    const height = arcball.element.clientHeight || arcball.element.innerHeight
+    if (width !== arcball.width) {
+      arcball.width = width
+      arcball.height = height
       arcball.radius = Math.min(arcball.width / 2, arcball.height / 2)
       arcball.center = [arcball.width / 2, arcball.height / 2]
     }
@@ -221,13 +223,15 @@ function createArcball (opts) {
     e.preventDefault()
   }
 
-  window.addEventListener('mousedown', onMouseDown)
+  Object.assign(arcball, initialState)
+  const a = arcball(opts)
+
+  arcball.element.addEventListener('mousedown', onMouseDown)
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
-  window.addEventListener('wheel', onWheel)
+  arcball.element.addEventListener('wheel', onWheel)
 
-  Object.assign(arcball, initialState)
-  return arcball(opts)
+  return a
 }
 
 module.exports = createArcball

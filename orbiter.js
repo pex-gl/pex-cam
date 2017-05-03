@@ -42,9 +42,9 @@ function createOrbiter (opts) {
     dragging: false,
     lat: 0, // Y
     lon: 0, // XZ
-    elem: window,
-    width: window.innerWidth,
-    height: window.innerHeight,
+    element: opts.element || window,
+    width: 0,
+    height: 0,
     clickPosWindow: [0, 0],
     dragPos: [0, 0, 0],
     dragPosWindow: [0, 0],
@@ -78,9 +78,11 @@ function createOrbiter (opts) {
   }
 
   function updateWindowSize () {
-    if (window.innerWidth !== orbiter.width) {
-      orbiter.width = window.innerWidth
-      orbiter.height = window.innerHeight
+    const width = orbiter.element.clientWidth || orbiter.element.innerWidth
+    const height = orbiter.element.clientHeight || orbiter.element.innerHeight
+    if (width !== orbiter.width) {
+      orbiter.width = width
+      orbiter.height = height
       orbiter.radius = Math.min(orbiter.width / 2, orbiter.height / 2)
       orbiter.center = [orbiter.width / 2, orbiter.height / 2]
     }
@@ -204,13 +206,14 @@ function createOrbiter (opts) {
     e.preventDefault()
   }
 
-  window.addEventListener('mousedown', onMouseDown)
-  window.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('mouseup', onMouseUp)
-  window.addEventListener('wheel', onWheel)
-
   Object.assign(orbiter, initialState)
   var o = orbiter(opts)
+
+  orbiter.element.addEventListener('mousedown', onMouseDown)
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
+  orbiter.element.addEventListener('wheel', onWheel)
+
   updateCamera()
 
   return o
