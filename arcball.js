@@ -207,11 +207,11 @@ function createArcball (opts) {
 
   function onMouseDown (e) {
     updateWindowSize()
-    down(e.offsetX, e.offsetY, e.shiftKey)
+    down(e.offsetX || e.clientX || e.touches[0].clientX, e.offsetY || e.clientY || e.touches[0].clientY, e.shiftKey || (e.touches && e.touches.length === 2))
   }
 
   function onMouseMove (e) {
-    move(e.offsetX, e.offsetY, e.shiftKey)
+    move(e.offsetX || e.clientX || e.touches[0].clientX, e.offsetY || e.clientY || e.touches[0].clientY, e.shiftKey || (e.touches && e.touches.length === 2))
   }
 
   function onMouseUp (e) {
@@ -227,8 +227,14 @@ function createArcball (opts) {
   const a = arcball(opts)
 
   arcball.element.addEventListener('mousedown', onMouseDown)
+  arcball.element.addEventListener('touchstart', (e) => {
+    e.preventDefault()
+    onMouseDown(e)
+  })
   window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('touchmove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
+  window.addEventListener('touchend', onMouseUp)
   arcball.element.addEventListener('wheel', onWheel)
 
   return a

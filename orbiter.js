@@ -190,11 +190,11 @@ function createOrbiter (opts) {
 
   function onMouseDown (e) {
     updateWindowSize()
-    down(e.offsetX, e.offsetY, e.shiftKey)
+    down(e.offsetX || e.clientX || e.touches[0].clientX, e.offsetY || e.clientY || e.touches[0].clientY, e.shiftKey || (e.touches && e.touches.length === 2))
   }
 
   function onMouseMove (e) {
-    move(e.offsetX, e.offsetY, e.shiftKey)
+    move(e.offsetX || e.clientX || e.touches[0].clientX, e.offsetY || e.clientY || e.touches[0].clientY, e.shiftKey || (e.touches && e.touches.length === 2))
   }
 
   function onMouseUp (e) {
@@ -210,8 +210,14 @@ function createOrbiter (opts) {
   var o = orbiter(opts)
 
   orbiter.element.addEventListener('mousedown', onMouseDown)
+  orbiter.element.addEventListener('touchstart', (e) => {
+    e.preventDefault()
+    onMouseDown(e)
+  })
   window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('touchmove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
+  window.addEventListener('touchend', onMouseUp)
   orbiter.element.addEventListener('wheel', onWheel)
 
   updateCamera()
