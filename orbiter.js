@@ -190,11 +190,19 @@ function createOrbiter (opts) {
 
   function onMouseDown (e) {
     updateWindowSize()
-    down(e.offsetX || e.clientX || e.touches[0].clientX, e.offsetY || e.clientY || e.touches[0].clientY, e.shiftKey || (e.touches && e.touches.length === 2))
+    down(
+      e.offsetX || e.clientX || (e.touches ? e.touches[0].clientX : 0),
+      e.offsetY || e.clientY || (e.touches ? e.touches[0].clientY : 0),
+      e.shiftKey || (e.touches && e.touches.length === 2)
+    )
   }
 
   function onMouseMove (e) {
-    move(e.offsetX || e.clientX || e.touches[0].clientX, e.offsetY || e.clientY || e.touches[0].clientY, e.shiftKey || (e.touches && e.touches.length === 2))
+    move(
+      e.offsetX || e.clientX || (e.touches ? e.touches[0].clientX : 0),
+      e.offsetY || e.clientY || (e.touches ? e.touches[0].clientY : 0),
+      e.shiftKey || (e.touches && e.touches.length === 2)
+    )
   }
 
   function onMouseUp (e) {
