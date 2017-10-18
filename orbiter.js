@@ -52,6 +52,7 @@ function createOrbiter (opts) {
     minDistance: 1,
     maxDistance: 1,
     zoom: true,
+    pan: true,
     // enabled: true,
     clickTarget: [0, 0, 0],
     clickPosPlane: [0, 0, 0],
@@ -110,7 +111,7 @@ function createOrbiter (opts) {
     orbiter.dragging = true
     orbiter.dragPos[0] = x
     orbiter.dragPos[1] = y
-    if (shift) {
+    if (shift && orbiter.pan) {
       Vec2.set2(orbiter.clickPosWindow, x, y)
       Vec3.set(orbiter.clickTarget, orbiter.camera.target)
       const targetInViewSpace = Vec3.multMat4(Vec3.copy(orbiter.clickTarget), orbiter.camera.viewMatrix)
