@@ -7,7 +7,8 @@ const createCamera = require('../perspective')
 const createArcball = require('../arcball')
 const createOrbiter = require('../orbiter')
 const Mat4 = require('pex-math/Mat4')
-const cube = createCube()
+const random = require('pex-random')
+const cube = createCube(0.2)
 
 const camera = createCamera({
   fov: Math.PI / 3,
@@ -48,6 +49,7 @@ const drawCube = regl({
     uniform mat4 uProjectionMatrix;
     uniform mat4 uViewMatrix;
     uniform mat4 uModelMatrix;
+    uniform vec3 uPosition;
 
     varying vec3 vNormal;
 
@@ -55,7 +57,7 @@ const drawCube = regl({
       mat4 modelViewMatrix = uViewMatrix * uModelMatrix;
       mat3 normalMatrix = mat3(transpose(inverse(modelViewMatrix)));
       vNormal = normalMatrix * aNormal;
-      gl_Position = uProjectionMatrix * modelViewMatrix * vec4(aPosition, 1.0);
+      gl_Position = uProjectionMatrix * modelViewMatrix * vec4(aPosition + uPosition, 1.0);
     }
   `,
   frag: `
@@ -73,9 +75,17 @@ const drawCube = regl({
   uniforms: {
 		uProjectionMatrix: regl.context('projectionMatrix'),
 		uViewMatrix: regl.context('viewMatrix'),
-    uModelMatrix: Mat4.create()
+    uModelMatrix: Mat4.create(),
+    uPosition: regl.prop('position')
   }
 })
+
+var instances = []
+for(var i = 0; i<200; i++) {
+  instances.push({
+    position: random.vec3()
+  })
+}
 
 window.addEventListener('resize', (e) => {
   gl.canvas.width = window.innerWidth
@@ -100,6 +110,6 @@ regl.frame(() => {
       color: [0.2, 0.2, 0.2, 1],
       depth: 1
     })
-    drawCube()
+    drawCube(instances)
   })
 })

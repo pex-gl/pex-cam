@@ -2,11 +2,11 @@
 const Vec2 = require('pex-math/Vec2')
 const Vec3 = require('pex-math/Vec3')
 const Mat4 = require('pex-math/Mat4')
-const lerp = require('pex-math/Utils').lerp
 const Ray = require('pex-geom/Ray')
 const clamp = require('pex-math/Utils').clamp
 const raf = require('raf')
 const interpolateAngle = require('interpolate-angle')
+const lerp = require('pex-math/Utils').lerp
 
 function getViewRay (camera, x, y, windowWidth, windowHeight) {
   const hNear = 2 * Math.tan(camera.fov / 2) * camera.near
@@ -58,6 +58,7 @@ function createOrbiter (opts) {
     currentDistance: 1,
     minDistance: 1,
     maxDistance: 1,
+    zoomSlowdown: 400,
     zoom: true,
     pan: true,
     // enabled: true,
@@ -113,7 +114,7 @@ function createOrbiter (opts) {
     // set new camera position according to the current
     // rotation at distance relative to target
     latLonToXyz(orbiter.currentLat, orbiter.currentLon, position)
-    Vec3.scale(position, orbiter.currentDistance)
+    Vec3.scale(position, orbiter.distance)
     Vec3.add(position, target)
 
     orbiter.camera({
@@ -198,7 +199,7 @@ function createOrbiter (opts) {
     if (!orbiter.zoom) {
       return
     }
-    orbiter.distance = orbiter.distance + dy / 50
+    orbiter.distance *= 1 + dy / orbiter.zoomSlowdown
     orbiter.distance = clamp(orbiter.distance, orbiter.minDistance, orbiter.maxDistance)
     updateCamera()
   }
