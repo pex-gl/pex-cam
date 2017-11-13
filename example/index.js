@@ -26,7 +26,8 @@ const camera = createCamera({
 
 const orbiter = createOrbiter({
   camera: camera,
-  element: gl.canvas
+  element: gl.canvas,
+  easing: 0.1
 })
 
 const drawCube = regl({

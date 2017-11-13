@@ -32,7 +32,9 @@
   },
   "homepage": "https://github.com/pex-gl/pex-cam",
   "dependencies": {
+    "interpolate-angle": "^1.0.2",
     "pex-geom": "^1.0.0",
-    "pex-math": "^1.0.1"
+    "pex-math": "^1.0.1",
+    "raf": "^3.4.0"
   }
 }

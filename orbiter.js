@@ -2,8 +2,11 @@
 const Vec2 = require('pex-math/Vec2')
 const Vec3 = require('pex-math/Vec3')
 const Mat4 = require('pex-math/Mat4')
+const lerp = require('pex-math/Utils').lerp
 const Ray = require('pex-geom/Ray')
 const clamp = require('pex-math/Utils').clamp
+const raf = require('raf')
+const interpolateAngle = require('interpolate-angle')
 
 function getViewRay (camera, x, y, windowWidth, windowHeight) {
   const hNear = 2 * Math.tan(camera.fov / 2) * camera.near
@@ -42,6 +45,9 @@ function createOrbiter (opts) {
     dragging: false,
     lat: 0, // Y
     lon: 0, // XZ
+    currentLat: 0,
+    currentLon: 0,
+    easing: 1,
     element: opts.element || window,
     width: 0,
     height: 0,
@@ -49,6 +55,7 @@ function createOrbiter (opts) {
     dragPos: [0, 0, 0],
     dragPosWindow: [0, 0],
     distance: 1,
+    currentDistance: 1,
     minDistance: 1,
     maxDistance: 1,
     zoom: true,
@@ -70,7 +77,10 @@ function createOrbiter (opts) {
       const latLon = xyzToLatLon(Vec3.normalize(Vec3.sub(Vec3.copy(opts.camera.position), opts.camera.target)))
       orbiter.lat = latLon[0]
       orbiter.lon = latLon[1]
+      orbiter.currentLat = orbiter.lat
+      orbiter.currentLon = orbiter.lon
       orbiter.distance = distance
+      orbiter.currentDistance = orbiter.distance
       orbiter.minDistance = distance / 10
       orbiter.maxDistance = distance * 10
     }
@@ -96,10 +106,14 @@ function createOrbiter (opts) {
     const position = orbiter.camera.position
     const target = orbiter.camera.target
 
+    orbiter.currentLat = interpolateAngle(orbiter.currentLat, orbiter.lat, orbiter.easing)
+    orbiter.currentLon = interpolateAngle(orbiter.currentLon, orbiter.lon, orbiter.easing)
+    orbiter.currentDistance = lerp(orbiter.currentDistance, orbiter.distance, orbiter.easing)
+
     // set new camera position according to the current
     // rotation at distance relative to target
-    latLonToXyz(orbiter.lat, orbiter.lon, position)
-    Vec3.scale(position, orbiter.distance)
+    latLonToXyz(orbiter.currentLat, orbiter.currentLon, position)
+    Vec3.scale(position, orbiter.currentDistance)
     Vec3.add(position, target)
 
     orbiter.camera({
@@ -230,6 +244,11 @@ function createOrbiter (opts) {
   orbiter.element.addEventListener('wheel', onWheel)
 
   updateCamera()
+
+  raf(function tick () {
+    updateCamera()
+    raf(tick)
+  })
 
   return o
 }
