@@ -1,8 +1,8 @@
 'use strict'
-const Vec2 = require('pex-math/Vec2')
-const Vec3 = require('pex-math/Vec3')
-const Mat4 = require('pex-math/Mat4')
-const Ray = require('pex-geom/Ray')
+const vec2 = require('pex-math/vec2')
+const vec3 = require('pex-math/vec3')
+const mat4 = require('pex-math/mat4')
+const ray = require('pex-geom/ray')
 const clamp = require('pex-math/Utils').clamp
 const raf = require('raf')
 const interpolateAngle = require('interpolate-angle')
@@ -16,7 +16,7 @@ function getViewRay (camera, x, y, windowWidth, windowHeight) {
   px *= wNear / 2
   py *= hNear / 2
   const origin = [0, 0, 0]
-  const direction = Vec3.normalize([px, py, -camera.near])
+  const direction = vec3.normalize([px, py, -camera.near])
   return [origin, direction]
 }
 
@@ -41,7 +41,7 @@ function createOrbiter (opts) {
   // TODO: split into internal state and public state
   const initialState = {
     camera: opts.camera,
-    invViewMatrix: Mat4.create(),
+    invViewMatrix: mat4.create(),
     dragging: false,
     lat: 0, // Y
     lon: 0, // XZ
@@ -74,8 +74,8 @@ function createOrbiter (opts) {
     Object.assign(orbiter, opts)
 
     if (opts.camera) {
-      const distance = Vec3.distance(opts.camera.position, opts.camera.target)
-      const latLon = xyzToLatLon(Vec3.normalize(Vec3.sub(Vec3.copy(opts.camera.position), opts.camera.target)))
+      const distance = vec3.distance(opts.camera.position, opts.camera.target)
+      const latLon = xyzToLatLon(vec3.normalize(vec3.sub(vec3.copy(opts.camera.position), opts.camera.target)))
       orbiter.lat = latLon[0]
       orbiter.lon = latLon[1]
       orbiter.currentLat = orbiter.lat
@@ -114,8 +114,8 @@ function createOrbiter (opts) {
     // set new camera position according to the current
     // rotation at distance relative to target
     latLonToXyz(orbiter.currentLat, orbiter.currentLon, position)
-    Vec3.scale(position, orbiter.distance)
-    Vec3.add(position, target)
+    vec3.scale(position, orbiter.distance)
+    vec3.add(position, target)
 
     orbiter.camera({
       position: position
@@ -127,17 +127,17 @@ function createOrbiter (opts) {
     orbiter.dragPos[0] = x
     orbiter.dragPos[1] = y
     if (shift && orbiter.pan) {
-      Vec2.set2(orbiter.clickPosWindow, x, y)
-      Vec3.set(orbiter.clickTarget, orbiter.camera.target)
-      const targetInViewSpace = Vec3.multMat4(Vec3.copy(orbiter.clickTarget), orbiter.camera.viewMatrix)
+      vec2.set2(orbiter.clickPosWindow, x, y)
+      vec3.set(orbiter.clickTarget, orbiter.camera.target)
+      const targetInViewSpace = vec3.multmat4(vec3.copy(orbiter.clickTarget), orbiter.camera.viewMatrix)
       orbiter.panPlane = [targetInViewSpace, [0, 0, 1]]
-      Ray.hitTestPlane(
+      ray.hitTestPlane(
         getViewRay(orbiter.camera, orbiter.clickPosWindow[0], orbiter.clickPosWindow[1], orbiter.width, orbiter.height),
         orbiter.panPlane[0],
         orbiter.panPlane[1],
         orbiter.clickPosPlane
       )
-      Ray.hitTestPlane(
+      ray.hitTestPlane(
         getViewRay(orbiter.camera, orbiter.dragPosWindow[0], orbiter.dragPosWindow[1], orbiter.width, orbiter.height),
         orbiter.panPlane[0],
         orbiter.panPlane[1],
@@ -153,25 +153,25 @@ function createOrbiter (opts) {
       return
     }
     if (shift && orbiter.panPlane) {
-      Vec2.set2(orbiter.dragPosWindow, x, y)
-      Ray.hitTestPlane(
-        getViewRay(orbiter.camera, orbiter.clickPosWindow[0], orbiter.clickPosWindow[1], orbiter.width, orbiter.height),
+      vec2.set2(orbiter.dragPosWindow, x, y)
+      ray.hitTestPlane(
+        getViewray(orbiter.camera, orbiter.clickPosWindow[0], orbiter.clickPosWindow[1], orbiter.width, orbiter.height),
         orbiter.panPlane[0],
         orbiter.panPlane[1],
         orbiter.clickPosPlane
       )
-      Ray.hitTestPlane(
-        getViewRay(orbiter.camera, orbiter.dragPosWindow[0], orbiter.dragPosWindow[1], orbiter.width, orbiter.height),
+      ray.hitTestPlane(
+        getViewray(orbiter.camera, orbiter.dragPosWindow[0], orbiter.dragPosWindow[1], orbiter.width, orbiter.height),
         orbiter.panPlane[0],
         orbiter.panPlane[1],
         orbiter.dragPosPlane
       )
-      Mat4.set(orbiter.invViewMatrix, orbiter.camera.viewMatrix)
-      Mat4.invert(orbiter.invViewMatrix)
-      Vec3.multMat4(Vec3.set(orbiter.clickPosWorld, orbiter.clickPosPlane), orbiter.invViewMatrix)
-      Vec3.multMat4(Vec3.set(orbiter.dragPosWorld, orbiter.dragPosPlane), orbiter.invViewMatrix)
-      const diffWorld = Vec3.sub(Vec3.copy(orbiter.dragPosWorld), orbiter.clickPosWorld)
-      const target = Vec3.sub(Vec3.copy(orbiter.clickTarget), diffWorld)
+      mat4.set(orbiter.invViewMatrix, orbiter.camera.viewMatrix)
+      mat4.invert(orbiter.invViewMatrix)
+      vec3.multmat4(vec3.set(orbiter.clickPosWorld, orbiter.clickPosPlane), orbiter.invViewMatrix)
+      vec3.multmat4(vec3.set(orbiter.dragPosWorld, orbiter.dragPosPlane), orbiter.invViewMatrix)
+      const diffWorld = vec3.sub(vec3.copy(orbiter.dragPosWorld), orbiter.clickPosWorld)
+      const target = vec3.sub(vec3.copy(orbiter.clickTarget), diffWorld)
       orbiter.camera({ target: target })
       updateCamera()
     } else {

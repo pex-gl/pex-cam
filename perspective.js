@@ -1,4 +1,4 @@
-const Mat4 = require('pex-math/Mat4')
+const mat4 = require('pex-math/mat4')
 
 function setFrustumOffset (camera, x, y, width, height, widthTotal, heightTotal) {
   // console.log('frustum', x, y, width, height, widthTotal, heightTotal)
@@ -26,17 +26,17 @@ function setFrustumOffset (camera, x, y, width, height, widthTotal, heightTotal)
   var t = top - y * heightNormalized
 
   camera.aspect = aspectRatio
-  Mat4.frustum(camera.projectionMatrix, l, r, b, t, near, far)
+  mat4.frustum(camera.projectionMatrix, l, r, b, t, near, far)
 }
 
 function createPerspectiveCamera (opts) {
-  // const projectionMatrix = Mat4.perspective([], 60, gl.canvas.width / gl.canvas.height, 0.1, 100)
-  // const viewMatrix = Mat4.lookAt([], [2, 2, 2], [0, 0, 0], [0, 1, 0])
-  // const modelMatrix = Mat4.create()
+  // const projectionMatrix = mat4.perspective([], 60, gl.canvas.width / gl.canvas.height, 0.1, 100)
+  // const viewMatrix = mat4.lookAt([], [2, 2, 2], [0, 0, 0], [0, 1, 0])
+  // const modelMatrix = mat4.create()
 
   const initialState = {
-    projectionMatrix: Mat4.create(),
-    viewMatrix: Mat4.create(),
+    projectionMatrix: mat4.create(),
+    viewMatrix: mat4.create(),
     position: [0, 0, 3],
     target: [0, 0, 0],
     up: [0, 1, 0],
@@ -50,7 +50,7 @@ function createPerspectiveCamera (opts) {
     Object.assign(camera, opts)
 
     if (opts.position || opts.target || opts.up) {
-      Mat4.lookAt(
+      mat4.lookAt(
         camera.viewMatrix,
         camera.position,
         camera.target,
@@ -59,9 +59,10 @@ function createPerspectiveCamera (opts) {
     }
 
     if (opts.fov || opts.aspect || opts.near || opts.far) {
-      Mat4.perspective(
+      console.log('camera.fov', camera.fov)
+      mat4.perspective(
         camera.projectionMatrix,
-        camera.fov / Math.PI * 180,
+        camera.fov,
         camera.aspect,
         camera.near,
         camera.far

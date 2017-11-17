@@ -6,7 +6,7 @@ const glsl = require('glslify')
 const createCamera = require('../perspective')
 const createArcball = require('../arcball')
 const createOrbiter = require('../orbiter')
-const Mat4 = require('pex-math/Mat4')
+const mat4 = require('pex-math/mat4')
 const random = require('pex-random')
 const cube = createCube(0.2)
 
@@ -75,7 +75,7 @@ const drawCube = regl({
   uniforms: {
 		uProjectionMatrix: regl.context('projectionMatrix'),
 		uViewMatrix: regl.context('viewMatrix'),
-    uModelMatrix: Mat4.create(),
+    uModelMatrix: mat4.create(),
     uPosition: regl.prop('position')
   }
 })

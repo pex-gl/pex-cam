@@ -1,12 +1,12 @@
-'use strict'
-const Vec2 = require('pex-math/Vec2')
-const Vec3 = require('pex-math/Vec3')
-const Mat4 = require('pex-math/Mat4')
-const Quat = require('pex-math/Quat')
-const Ray = require('pex-geom/Ray')
+'USE STRICT'
+const vec2 = require('pex-math/vec2')
+const vec3 = require('pex-math/vec3')
+const mat4 = require('pex-math/mat4')
+const quat = require('pex-math/quat')
+const ray = require('pex-geom/ray')
 const clamp = require('pex-math/Utils').clamp
 
-function getViewRay (camera, x, y, windowWidth, windowHeight) {
+function getViewray (camera, x, y, windowWidth, windowHeight) {
   const hNear = 2 * Math.tan(camera.fov / 2) * camera.near
   const wNear = hNear * camera.aspect
   let px = (x - windowWidth / 2) / (windowWidth / 2)
@@ -14,7 +14,7 @@ function getViewRay (camera, x, y, windowWidth, windowHeight) {
   px *= wNear / 2
   py *= hNear / 2
   const origin = [0, 0, 0]
-  const direction = Vec3.normalize([px, py, -camera.near])
+  const direction = vec3.normalize([px, py, -camera.near])
   return [origin, direction]
 }
 
@@ -32,14 +32,14 @@ function getViewRay (camera, x, y, windowWidth, windowHeight) {
 function createArcball (opts) {
   const initialState = {
     camera: opts.camera,
-    invViewMatrix: Mat4.create(),
+    invViewMatrix: mat4.create(),
     dragging: false,
     element: opts.element || window,
     width: window.innerWidth,
     height: window.innerHeight,
     radius: Math.min(window.innerWidth / 2, window.innerHeight / 2),
     center: [window.innerWidth / 2, window.innerHeight / 2],
-    currRot: Quat.create(),
+    currRot: quat.create(),
     clickRot: [0, 0, 0, 1],
     dragRot: [0, 0, 0, 1],
     clickPos: [0, 0, 0],
@@ -64,11 +64,11 @@ function createArcball (opts) {
     Object.assign(arcball, opts)
 
     if (opts.camera) {
-      const distance = Vec3.distance(opts.camera.position, opts.camera.target)
+      const distance = vec3.distance(opts.camera.position, opts.camera.target)
       arcball.distance = distance
       arcball.minDistance = distance / 10
       arcball.maxDistance = distance * 10
-      arcball.currRot = Quat.fromMat4(arcball.currRot, opts.camera.viewMatrix)
+      arcball.currRot = quat.frommat4(arcball.currRot, opts.camera.viewMatrix)
     }
 
     return arcball
@@ -96,12 +96,12 @@ function createArcball (opts) {
 
     // set new camera position according to the current
     // rotation at distance relative to target
-    Vec3.set3(position, 0, 0, distance)
-    Vec3.multQuat(position, arcball.currRot)
-    Vec3.add(position, target)
+    vec3.set3(position, 0, 0, distance)
+    vec3.multquat(position, arcball.currRot)
+    vec3.add(position, target)
 
-    Vec3.set3(up, 0, 1, 0)
-    Vec3.multQuat(up, arcball.currRot)
+    vec3.set3(up, 0, 1, 0)
+    vec3.multquat(up, arcball.currRot)
 
     arcball.camera({
       position: position,
@@ -119,7 +119,7 @@ function createArcball (opts) {
     out[1] = (y - arcball.center[1]) / arcball.radius
     const dist = out[0] * out[0] + out[1] * out[1]
     if (dist > 1) {
-      Vec3.normalize(out)
+      vec3.normalize(out)
     } else {
       out[2] = Math.sqrt(1 - dist)
     }
@@ -129,21 +129,21 @@ function createArcball (opts) {
   function down (x, y, shift) {
     arcball.dragging = true
     mouseToSphere(x, y, arcball.clickPos)
-    Quat.set(arcball.clickRot, arcball.currRot)
+    quat.set(arcball.clickRot, arcball.currRot)
     updateCamera()
     if (shift) {
-      Vec2.set2(arcball.clickPosWindow, x, y)
-      Vec3.set(arcball.clickTarget, arcball.camera.target)
-      const targetInViewSpace = Vec3.multMat4(Vec3.copy(arcball.clickTarget), arcball.camera.viewMatrix)
+      vec2.set2(arcball.clickPosWindow, x, y)
+      vec3.set(arcball.clickTarget, arcball.camera.target)
+      const targetInViewSpace = vec3.multmat4(vec3.copy(arcball.clickTarget), arcball.camera.viewMatrix)
       arcball.panPlane = [targetInViewSpace, [0, 0, 1]]
-      Ray.hitTestPlane(
-        getViewRay(arcball.camera, arcball.clickPosWindow[0], arcball.clickPosWindow[1], arcball.width, arcball.height),
+      ray.hitTestPlane(
+        getViewray(arcball.camera, arcball.clickPosWindow[0], arcball.clickPosWindow[1], arcball.width, arcball.height),
         arcball.panPlane[0],
         arcball.panPlane[1],
         arcball.clickPosPlane
       )
-      Ray.hitTestPlane(
-        getViewRay(arcball.camera, arcball.dragPosWindow[0], arcball.dragPosWindow[1], arcball.width, arcball.height),
+      ray.hitTestPlane(
+        getViewray(arcball.camera, arcball.dragPosWindow[0], arcball.dragPosWindow[1], arcball.width, arcball.height),
         arcball.panPlane[0],
         arcball.panPlane[1],
         arcball.dragPosPlane
@@ -158,35 +158,35 @@ function createArcball (opts) {
       return
     }
     if (shift && arcball.panPlane) {
-      Vec2.set2(arcball.dragPosWindow, x, y)
-      Ray.hitTestPlane(
-        getViewRay(arcball.camera, arcball.clickPosWindow[0], arcball.clickPosWindow[1], arcball.width, arcball.height),
+      vec2.set2(arcball.dragPosWindow, x, y)
+      ray.hitTestPlane(
+        getViewray(arcball.camera, arcball.clickPosWindow[0], arcball.clickPosWindow[1], arcball.width, arcball.height),
         arcball.panPlane[0],
         arcball.panPlane[1],
         arcball.clickPosPlane
       )
-      Ray.hitTestPlane(
-        getViewRay(arcball.camera, arcball.dragPosWindow[0], arcball.dragPosWindow[1], arcball.width, arcball.height),
+      ray.hitTestPlane(
+        getViewray(arcball.camera, arcball.dragPosWindow[0], arcball.dragPosWindow[1], arcball.width, arcball.height),
         arcball.panPlane[0],
         arcball.panPlane[1],
         arcball.dragPosPlane
       )
-      Mat4.set(arcball.invViewMatrix, arcball.camera.viewMatrix)
-      Mat4.invert(arcball.invViewMatrix)
-      Vec3.multMat4(Vec3.set(arcball.clickPosWorld, arcball.clickPosPlane), arcball.invViewMatrix)
-      Vec3.multMat4(Vec3.set(arcball.dragPosWorld, arcball.dragPosPlane), arcball.invViewMatrix)
-      const diffWorld = Vec3.sub(Vec3.copy(arcball.dragPosWorld), arcball.clickPosWorld)
-      const target = Vec3.sub(Vec3.copy(arcball.clickTarget), diffWorld)
+      mat4.set(arcball.invViewMatrix, arcball.camera.viewMatrix)
+      mat4.invert(arcball.invViewMatrix)
+      vec3.multmat4(vec3.set(arcball.clickPosWorld, arcball.clickPosPlane), arcball.invViewMatrix)
+      vec3.multmat4(vec3.set(arcball.dragPosWorld, arcball.dragPosPlane), arcball.invViewMatrix)
+      const diffWorld = vec3.sub(vec3.copy(arcball.dragPosWorld), arcball.clickPosWorld)
+      const target = vec3.sub(vec3.copy(arcball.clickTarget), diffWorld)
       arcball.camera({ target: target })
       updateCamera()
     } else {
       mouseToSphere(x, y, arcball.dragPos)
-      Vec3.set(arcball.rotAxis, arcball.clickPos)
-      Vec3.cross(arcball.rotAxis, arcball.dragPos)
-      const theta = Vec3.dot(arcball.clickPos, arcball.dragPos)
-      Quat.set4(arcball.dragRot, arcball.rotAxis[0], arcball.rotAxis[1], arcball.rotAxis[2], theta)
-      Quat.set(arcball.currRot, arcball.dragRot)
-      Quat.mult(arcball.currRot, arcball.clickRot)
+      vec3.set(arcball.rotAxis, arcball.clickPos)
+      vec3.cross(arcball.rotAxis, arcball.dragPos)
+      const theta = vec3.dot(arcball.clickPos, arcball.dragPos)
+      quat.set4(arcball.dragRot, arcball.rotAxis[0], arcball.rotAxis[1], arcball.rotAxis[2], theta)
+      quat.set(arcball.currRot, arcball.dragRot)
+      quat.mult(arcball.currRot, arcball.clickRot)
       updateCamera()
     }
   }
