@@ -1,20 +1,19 @@
 'use strict'
-const gl = require('pex-gl')(window.innerWidth, window.innerHeight)
-const regl = require('regl')(gl)
+const ctx = require('pex-context')()
 const createCube = require('primitive-cube')
 const glsl = require('glslify')
 const createCamera = require('../perspective')
-const createArcball = require('../arcball')
 const createOrbiter = require('../orbiter')
 const mat4 = require('pex-math/mat4')
 const random = require('pex-random')
+
 const cube = createCube(0.2)
 
 const camera = createCamera({
   fov: Math.PI / 3,
   aspect: window.innerWidth / window.innerHeight,
   near: 0.1,
-  far: 10,
+  far: 100,
   position: [3, 3, 3],
   target: [0, 0, 0],
   up: [0, 1, 0]
@@ -25,91 +24,88 @@ const camera = createCamera({
   // element: gl.canvas
 // })
 
-const orbiter = createOrbiter({
+createOrbiter({
   camera: camera,
-  element: gl.canvas,
+  element: ctx.gl.canvas,
   easing: 0.1
 })
 
-const drawCube = regl({
-  attributes: {
-    aPosition: cube.positions,
-    aNormal: cube.normals
-  },
-  elements: cube.cells,
-  vert: glsl`
-    #ifdef GL_ES
-    #pragma glslify: transpose = require(glsl-transpose)
-    #endif
-    #pragma glslify: inverse = require(glsl-inverse)
+const clearCmd = {
+  pass: ctx.pass({
+    clearColor: [0, 0, 0, 1],
+    clearDepth: 1
+  })
+}
 
-    attribute vec3 aPosition;
-    attribute vec3 aNormal;
+const drawCubeCmd = {
+  pipeline: ctx.pipeline({
+    vert: glsl`
+      #ifdef GL_ES
+      #pragma glslify: transpose = require(glsl-transpose)
+      #endif
+      #pragma glslify: inverse = require(glsl-inverse)
 
-    uniform mat4 uProjectionMatrix;
-    uniform mat4 uViewMatrix;
-    uniform mat4 uModelMatrix;
-    uniform vec3 uPosition;
+      attribute vec3 aPosition;
+      attribute vec3 aNormal;
 
-    varying vec3 vNormal;
+      uniform mat4 uProjectionMatrix;
+      uniform mat4 uViewMatrix;
+      uniform mat4 uModelMatrix;
+      uniform vec3 uPosition;
 
-    void main () {
-      mat4 modelViewMatrix = uViewMatrix * uModelMatrix;
-      mat3 normalMatrix = mat3(transpose(inverse(modelViewMatrix)));
-      vNormal = normalMatrix * aNormal;
-      gl_Position = uProjectionMatrix * modelViewMatrix * vec4(aPosition + uPosition, 1.0);
-    }
-  `,
-  frag: `
-    #ifdef GL_ES
-    precision highp float;
-    #endif
+      varying vec3 vNormal;
 
-    varying vec3 vNormal;
+      void main () {
+        mat4 modelViewMatrix = uViewMatrix * uModelMatrix;
+        mat3 normalMatrix = mat3(transpose(inverse(modelViewMatrix))); vNormal = normalMatrix * aNormal;
+        gl_Position = uProjectionMatrix * modelViewMatrix * vec4(aPosition + uPosition, 1.0);
+      }
+    `,
+    frag: `
+      #ifdef GL_ES
+      precision highp float;
+      #endif
 
-    void main () {
-      gl_FragColor.rgb = vNormal * 0.5 + 0.5;
-      gl_FragColor.a = 1.0;
-    }
-  `,
+      varying vec3 vNormal;
+
+      void main () {
+        gl_FragColor.rgb = vNormal * 0.5 + 0.5;
+        gl_FragColor.a = 1.0;
+      }
+    `,
+    depthTest: true
+  }),
   uniforms: {
-		uProjectionMatrix: regl.context('projectionMatrix'),
-		uViewMatrix: regl.context('viewMatrix'),
+    uProjectionMatrix: camera.projectionMatrix,
+    uViewMatrix: camera.viewMatrix,
     uModelMatrix: mat4.create(),
-    uPosition: regl.prop('position')
-  }
-})
+    uPosition: [0, 0, 0]
+  },
+  attributes: {
+    aPosition: ctx.vertexBuffer(cube.positions),
+    aNormal: ctx.vertexBuffer(cube.normals)
+  },
+  indices: ctx.indexBuffer(cube.cells)
+}
 
 var instances = []
-for(var i = 0; i<200; i++) {
+for (var i = 0; i < 200; i++) {
   instances.push({
-    position: random.vec3()
+    uniforms: {
+      uPosition: random.vec3()
+    }
   })
 }
 
 window.addEventListener('resize', (e) => {
-  gl.canvas.width = window.innerWidth
-  gl.canvas.height = window.innerHeight
-  camera({
-    aspect: gl.canvas.width / gl.canvas.height
+  ctx.gl.canvas.width = window.innerWidth
+  ctx.gl.canvas.height = window.innerHeight
+  camera.set({
+    aspect: ctx.gl.canvas.width / ctx.gl.canvas.height
   })
 })
 
-// i can pass matrices by reference here but i can in drawing command
-// in drawing command the matrix uniforms have to made dynamic to update every frame
-const setupCamera = regl({
-	context: {
-		projectionMatrix: () => camera.projectionMatrix,
-		viewMatrix: () => camera.viewMatrix
-	}
-})
-
-regl.frame(() => {
-  setupCamera(() => {
-    regl.clear({
-      color: [0.2, 0.2, 0.2, 1],
-      depth: 1
-    })
-    drawCube(instances)
-  })
+ctx.frame(() => {
+  ctx.submit(clearCmd)
+  ctx.submit(drawCubeCmd, instances)
 })

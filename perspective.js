@@ -1,3 +1,4 @@
+const vec3 = require('pex-math/vec3')
 const mat4 = require('pex-math/mat4')
 
 function setFrustumOffset (camera, x, y, width, height, widthTotal, heightTotal) {
@@ -29,13 +30,10 @@ function setFrustumOffset (camera, x, y, width, height, widthTotal, heightTotal)
   mat4.frustum(camera.projectionMatrix, l, r, b, t, near, far)
 }
 
-function createPerspectiveCamera (opts) {
-  // const projectionMatrix = mat4.perspective([], 60, gl.canvas.width / gl.canvas.height, 0.1, 100)
-  // const viewMatrix = mat4.lookAt([], [2, 2, 2], [0, 0, 0], [0, 1, 0])
-  // const modelMatrix = mat4.create()
-
-  const initialState = {
+function PerspectiveCamera (opts) {
+  this.set({
     projectionMatrix: mat4.create(),
+    invViewMatrix: mat4.create(),
     viewMatrix: mat4.create(),
     position: [0, 0, 3],
     target: [0, 0, 0],
@@ -44,50 +42,83 @@ function createPerspectiveCamera (opts) {
     aspect: 1,
     near: 0.1,
     far: 100
-  }
+  })
 
-  function camera (opts) {
-    Object.assign(camera, opts)
-
-    if (opts.position || opts.target || opts.up) {
-      mat4.lookAt(
-        camera.viewMatrix,
-        camera.position,
-        camera.target,
-        camera.up
-      )
-    }
-
-    if (opts.fov || opts.aspect || opts.near || opts.far) {
-      console.log('camera.fov', camera.fov)
-      mat4.perspective(
-        camera.projectionMatrix,
-        camera.fov,
-        camera.aspect,
-        camera.near,
-        camera.far
-      )
-    }
-
-    if (camera.frustum) {
-      // console.log('pex-cam:perspective', 'setting frustum', camera.frustum)
-      // console.log('pex-cam:perspective', 'setting frustum before', camera.projectionMatrix)
-      setFrustumOffset(
-        camera,
-        camera.frustum.offset[0], camera.frustum.offset[1],
-        camera.frustum.size[0], camera.frustum.size[1],
-        camera.frustum.totalSize[0], camera.frustum.totalSize[1]
-      )
-      // console.log('pex-cam:perspective', 'setting frustum after', camera.projectionMatrix)
-    }
-
-    return camera
-  }
-
-  Object.assign(camera, initialState)
-
-  return camera(opts)
+  this.set(opts)
 }
 
-module.exports = createPerspectiveCamera
+PerspectiveCamera.prototype.set = function (opts) {
+  Object.assign(this, opts)
 
+  if (opts.position || opts.target || opts.up) {
+    mat4.lookAt(
+      this.viewMatrix,
+      this.position,
+      this.target,
+      this.up
+    )
+    mat4.set(this.invViewMatrix, this.viewMatrix)
+    mat4.invert(this.invViewMatrix)
+  }
+
+  if (opts.fov || opts.aspect || opts.near || opts.far) {
+    mat4.perspective(
+      this.projectionMatrix,
+      this.fov,
+      this.aspect,
+      this.near,
+      this.far
+    )
+  }
+
+  if (this.frustum) {
+    setFrustumOffset(
+      this,
+      this.frustum.offset[0], this.frustum.offset[1],
+      this.frustum.size[0], this.frustum.size[1],
+      this.frustum.totalSize[0], this.frustum.totalSize[1]
+    )
+  }
+}
+
+PerspectiveCamera.prototype.getViewRay = function (x, y, windowWidth, windowHeight) {
+  if (this.frustum) {
+    x += this.frustum.offset[0]
+    y += this.frustum.offset[1]
+    windowWidth = this.frustum.totalSize[0]
+    windowHeight = this.frustum.totalSize[1]
+  }
+  let nx = 2 * x / windowWidth - 1
+  let ny = 1 - 2 * y / windowHeight
+
+  let hNear = 2 * Math.tan(this.fov / 2) * this.near
+  let wNear = hNear * this.aspect
+
+  nx *= (wNear * 0.5)
+  ny *= (hNear * 0.5)
+
+  let origin = [0, 0, 0]
+  let direction = vec3.normalize([nx, ny, -this.near])
+  let ray = [origin, direction]
+
+  return ray
+}
+
+PerspectiveCamera.prototype.getWorldRay = function (x, y, windowWidth, windowHeight) {
+  let ray = this.getViewRay(x, y, windowWidth, windowHeight)
+  let origin = ray[0]
+  let direction = ray[1]
+
+  vec3.multMat4(origin, this.invViewMatrix)
+  // this is correct as origin is [0, 0, 0] so direction is also a point
+  vec3.multMat4(direction, this.invViewMatrix)
+
+  // is this necessary?
+  vec3.normalize(vec3.sub(direction, origin))
+
+  return ray
+}
+
+module.exports = function createPerspectiveCamera (opts) {
+  return new PerspectiveCamera(opts)
+}

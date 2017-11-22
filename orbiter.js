@@ -1,24 +1,11 @@
 'use strict'
-const vec2 = require('pex-math/vec2')
 const vec3 = require('pex-math/vec3')
 const mat4 = require('pex-math/mat4')
 const ray = require('pex-geom/ray')
-const clamp = require('pex-math/Utils').clamp
+const clamp = require('pex-math/utils').clamp
 const raf = require('raf')
 const interpolateAngle = require('interpolate-angle')
-const lerp = require('pex-math/Utils').lerp
-
-function getViewRay (camera, x, y, windowWidth, windowHeight) {
-  const hNear = 2 * Math.tan(camera.fov / 2) * camera.near
-  const wNear = hNear * camera.aspect
-  let px = (x - windowWidth / 2) / (windowWidth / 2)
-  let py = -(y - windowHeight / 2) / (windowHeight / 2)
-  px *= wNear / 2
-  py *= hNear / 2
-  const origin = [0, 0, 0]
-  const direction = vec3.normalize([px, py, -camera.near])
-  return [origin, direction]
-}
+const lerp = require('pex-math/utils').lerp
 
 function latLonToXyz (lat, lon, out) {
   out = out || [0, 0, 0]
@@ -30,6 +17,7 @@ function latLonToXyz (lat, lon, out) {
   return out
 }
 
+// TODO: check if it matches primitive sphere 0 deg
 function xyzToLatLon (normalizedPosition, out) {
   out = out || [0, 0]
   out[0] = Math.asin(normalizedPosition[1])// + Math.PI / 2 // lat
@@ -37,7 +25,7 @@ function xyzToLatLon (normalizedPosition, out) {
   return out
 }
 
-function createOrbiter (opts) {
+function Orbiter (opts) {
   // TODO: split into internal state and public state
   const initialState = {
     camera: opts.camera,
@@ -70,75 +58,81 @@ function createOrbiter (opts) {
     panPlane: null
   }
 
-  function orbiter (opts) {
-    Object.assign(orbiter, opts)
+  this.set(initialState)
+  this.set(opts)
+  this.setup()
+}
 
-    if (opts.camera) {
-      const distance = vec3.distance(opts.camera.position, opts.camera.target)
-      const latLon = xyzToLatLon(vec3.normalize(vec3.sub(vec3.copy(opts.camera.position), opts.camera.target)))
-      orbiter.lat = latLon[0]
-      orbiter.lon = latLon[1]
-      orbiter.currentLat = orbiter.lat
-      orbiter.currentLon = orbiter.lon
-      orbiter.distance = distance
-      orbiter.currentDistance = orbiter.distance
-      orbiter.minDistance = distance / 10
-      orbiter.maxDistance = distance * 10
-    }
+Orbiter.prototype.set = function (opts) {
+  Object.assign(this, opts)
 
-    return orbiter
+  if (opts.camera) {
+    const distance = vec3.distance(opts.camera.position, opts.camera.target)
+    const latLon = xyzToLatLon(vec3.normalize(vec3.sub(vec3.copy(opts.camera.position), opts.camera.target)))
+    this.lat = latLon[0]
+    this.lon = latLon[1]
+    this.currentLat = this.lat
+    this.currentLon = this.lon
+    this.distance = distance
+    this.currentDistance = this.distance
+    this.minDistance = distance / 10
+    this.maxDistance = distance * 10
   }
+}
 
-  function updateWindowSize () {
-    const width = orbiter.element.clientWidth || orbiter.element.innerWidth
-    const height = orbiter.element.clientHeight || orbiter.element.innerHeight
-    if (width !== orbiter.width) {
-      orbiter.width = width
-      orbiter.height = height
-      orbiter.radius = Math.min(orbiter.width / 2, orbiter.height / 2)
-      orbiter.center = [orbiter.width / 2, orbiter.height / 2]
-    }
+Orbiter.prototype.updateWindowSize = function () {
+  const width = this.element.clientWidth || this.element.innerWidth
+  const height = this.element.clientHeight || this.element.innerHeight
+  if (width !== this.width) {
+    this.width = width
+    this.height = height
+    this.radius = Math.min(this.width / 2, this.height / 2)
   }
+}
 
-  function updateCamera () {
-    // instad of rotating the object we want to move camera around it
-    // state.currRot[3] *= -1
+Orbiter.prototype.updateCamera = function () {
+  // instad of rotating the object we want to move camera around it
+  // state.currRot[3] *= -1
 
-    const position = orbiter.camera.position
-    const target = orbiter.camera.target
+  const position = this.camera.position
+  const target = this.camera.target
 
-    orbiter.currentLat = interpolateAngle(orbiter.currentLat, orbiter.lat, orbiter.easing)
-    orbiter.currentLon = interpolateAngle(orbiter.currentLon, orbiter.lon, orbiter.easing)
-    orbiter.currentDistance = lerp(orbiter.currentDistance, orbiter.distance, orbiter.easing)
+  this.currentLat = interpolateAngle(this.currentLat, this.lat, this.easing)
+  this.currentLon = interpolateAngle(this.currentLon, this.lon, this.easing)
+  this.currentDistance = lerp(this.currentDistance, this.distance, this.easing)
 
-    // set new camera position according to the current
-    // rotation at distance relative to target
-    latLonToXyz(orbiter.currentLat, orbiter.currentLon, position)
-    vec3.scale(position, orbiter.distance)
-    vec3.add(position, target)
+  // set new camera position according to the current
+  // rotation at distance relative to target
+  latLonToXyz(this.currentLat, this.currentLon, position)
+  vec3.scale(position, this.distance)
+  vec3.add(position, target)
 
-    orbiter.camera({
-      position: position
-    })
-  }
+  this.camera.set({
+    position: position
+  })
+}
+
+Orbiter.prototype.setup = function () {
+  var orbiter = this
 
   function down (x, y, shift) {
     orbiter.dragging = true
     orbiter.dragPos[0] = x
     orbiter.dragPos[1] = y
     if (shift && orbiter.pan) {
-      vec2.set2(orbiter.clickPosWindow, x, y)
+      orbiter.clickPosWindow[0] = x
+      orbiter.clickPosWindow[1] = y
       vec3.set(orbiter.clickTarget, orbiter.camera.target)
-      const targetInViewSpace = vec3.multmat4(vec3.copy(orbiter.clickTarget), orbiter.camera.viewMatrix)
+      const targetInViewSpace = vec3.multMat4(vec3.copy(orbiter.clickTarget), orbiter.camera.viewMatrix)
       orbiter.panPlane = [targetInViewSpace, [0, 0, 1]]
       ray.hitTestPlane(
-        getViewRay(orbiter.camera, orbiter.clickPosWindow[0], orbiter.clickPosWindow[1], orbiter.width, orbiter.height),
+        orbiter.camera.getViewRay(orbiter.clickPosWindow[0], orbiter.clickPosWindow[1], orbiter.width, orbiter.height),
         orbiter.panPlane[0],
         orbiter.panPlane[1],
         orbiter.clickPosPlane
       )
       ray.hitTestPlane(
-        getViewRay(orbiter.camera, orbiter.dragPosWindow[0], orbiter.dragPosWindow[1], orbiter.width, orbiter.height),
+        orbiter.camera.getViewRay(orbiter.dragPosWindow[0], orbiter.dragPosWindow[1], orbiter.width, orbiter.height),
         orbiter.panPlane[0],
         orbiter.panPlane[1],
         orbiter.dragPosPlane
@@ -153,27 +147,28 @@ function createOrbiter (opts) {
       return
     }
     if (shift && orbiter.panPlane) {
-      vec2.set2(orbiter.dragPosWindow, x, y)
+      orbiter.dragPosWindow[0] = x
+      orbiter.dragPosWindow[1] = y
       ray.hitTestPlane(
-        getViewray(orbiter.camera, orbiter.clickPosWindow[0], orbiter.clickPosWindow[1], orbiter.width, orbiter.height),
+        orbiter.camera.getViewRay(orbiter.clickPosWindow[0], orbiter.clickPosWindow[1], orbiter.width, orbiter.height),
         orbiter.panPlane[0],
         orbiter.panPlane[1],
         orbiter.clickPosPlane
       )
       ray.hitTestPlane(
-        getViewray(orbiter.camera, orbiter.dragPosWindow[0], orbiter.dragPosWindow[1], orbiter.width, orbiter.height),
+        orbiter.camera.getViewRay(orbiter.dragPosWindow[0], orbiter.dragPosWindow[1], orbiter.width, orbiter.height),
         orbiter.panPlane[0],
         orbiter.panPlane[1],
         orbiter.dragPosPlane
       )
       mat4.set(orbiter.invViewMatrix, orbiter.camera.viewMatrix)
       mat4.invert(orbiter.invViewMatrix)
-      vec3.multmat4(vec3.set(orbiter.clickPosWorld, orbiter.clickPosPlane), orbiter.invViewMatrix)
-      vec3.multmat4(vec3.set(orbiter.dragPosWorld, orbiter.dragPosPlane), orbiter.invViewMatrix)
+      vec3.multMat4(vec3.set(orbiter.clickPosWorld, orbiter.clickPosPlane), orbiter.invViewMatrix)
+      vec3.multMat4(vec3.set(orbiter.dragPosWorld, orbiter.dragPosPlane), orbiter.invViewMatrix)
       const diffWorld = vec3.sub(vec3.copy(orbiter.dragPosWorld), orbiter.clickPosWorld)
       const target = vec3.sub(vec3.copy(orbiter.clickTarget), diffWorld)
-      orbiter.camera({ target: target })
-      updateCamera()
+      orbiter.camera.set({ target: target })
+      orbiter.updateCamera()
     } else {
       const dx = x - orbiter.dragPos[0]
       const dy = y - orbiter.dragPos[1]
@@ -186,7 +181,7 @@ function createOrbiter (opts) {
       orbiter.lon += dx / 200
       orbiter.lon = orbiter.lon % (2 * Math.PI)
 
-      updateCamera()
+      orbiter.updateCamera()
     }
   }
 
@@ -201,11 +196,11 @@ function createOrbiter (opts) {
     }
     orbiter.distance *= 1 + dy / orbiter.zoomSlowdown
     orbiter.distance = clamp(orbiter.distance, orbiter.minDistance, orbiter.maxDistance)
-    updateCamera()
+    orbiter.updateCamera()
   }
 
   function onMouseDown (e) {
-    updateWindowSize()
+    orbiter.updateWindowSize()
     down(
       e.offsetX || e.clientX || (e.touches ? e.touches[0].clientX : 0),
       e.offsetY || e.clientY || (e.touches ? e.touches[0].clientY : 0),
@@ -230,11 +225,8 @@ function createOrbiter (opts) {
     e.preventDefault()
   }
 
-  Object.assign(orbiter, initialState)
-  var o = orbiter(opts)
-
-  orbiter.element.addEventListener('mousedown', onMouseDown)
-  orbiter.element.addEventListener('touchstart', (e) => {
+  this.element.addEventListener('mousedown', onMouseDown)
+  this.element.addEventListener('touchstart', (e) => {
     e.preventDefault()
     onMouseDown(e)
   })
@@ -242,18 +234,18 @@ function createOrbiter (opts) {
   window.addEventListener('touchmove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
   window.addEventListener('touchend', onMouseUp)
-  orbiter.element.addEventListener('wheel', onWheel)
+  this.element.addEventListener('wheel', onWheel)
 
-  updateCamera()
+  this.updateCamera()
 
   raf(function tick () {
-    updateCamera()
+    orbiter.updateCamera()
     raf(tick)
   })
-
-  return o
 }
 
-module.exports = createOrbiter
+module.exports = function createOrbiter (opts) {
+  return new Orbiter(opts)
+}
 module.exports.latLonToXyz = latLonToXyz
 module.exports.xyzToLatLon = xyzToLatLon
