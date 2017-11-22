@@ -6,24 +6,10 @@ const clamp = require('pex-math/utils').clamp
 const raf = require('raf')
 const interpolateAngle = require('interpolate-angle')
 const lerp = require('pex-math/utils').lerp
-
-function latLonToXyz (lat, lon, out) {
-  out = out || [0, 0, 0]
-  const theta = lat
-  const phi = lon
-  out[0] = Math.cos(theta) * Math.cos(phi)
-  out[1] = Math.sin(theta)
-  out[2] = Math.cos(theta) * Math.sin(phi)
-  return out
-}
-
-// TODO: check if it matches primitive sphere 0 deg
-function xyzToLatLon (normalizedPosition, out) {
-  out = out || [0, 0]
-  out[0] = Math.asin(normalizedPosition[1])// + Math.PI / 2 // lat
-  out[1] = Math.atan2(normalizedPosition[2], normalizedPosition[0])// + Math.PI / 2 // lon
-  return out
-}
+const toRadians = require('pex-math/utils').toRadians
+const toDegrees = require('pex-math/utils').toDegrees
+const latLonToXyz = require('latlon-to-xyz')
+const xyzToLatLon = require('xyz-to-latlon')
 
 function Orbiter (opts) {
   // TODO: split into internal state and public state
@@ -49,7 +35,8 @@ function Orbiter (opts) {
     zoomSlowdown: 400,
     zoom: true,
     pan: true,
-    // enabled: true,
+    drag: true,
+    dragSlowdown: 4,
     clickTarget: [0, 0, 0],
     clickPosPlane: [0, 0, 0],
     dragPosPlane: [0, 0, 0],
@@ -64,6 +51,9 @@ function Orbiter (opts) {
 }
 
 Orbiter.prototype.set = function (opts) {
+  if (opts.lat !== undefined) {
+
+  }
   Object.assign(this, opts)
 
   if (opts.camera) {
@@ -97,8 +87,20 @@ Orbiter.prototype.updateCamera = function () {
   const position = this.camera.position
   const target = this.camera.target
 
-  this.currentLat = interpolateAngle(this.currentLat, this.lat, this.easing)
-  this.currentLon = interpolateAngle(this.currentLon, this.lon, this.easing)
+  this.currentLat = toDegrees(
+    interpolateAngle(
+      (toRadians(this.currentLat) + 2 * Math.PI) % (2 * Math.PI),
+      (toRadians(this.lat) + 2 * Math.PI) % (2 * Math.PI),
+      this.easing
+    )
+  )
+  this.currentLon = toDegrees(
+    interpolateAngle(
+      (toRadians(this.currentLon) + 2 * Math.PI) % (2 * Math.PI),
+      (toRadians(this.lon) + 2 * Math.PI) % (2 * Math.PI),
+      this.easing
+    )
+  )
   this.currentDistance = lerp(this.currentDistance, this.distance, this.easing)
 
   // set new camera position according to the current
@@ -169,17 +171,17 @@ Orbiter.prototype.setup = function () {
       const target = vec3.sub(vec3.copy(orbiter.clickTarget), diffWorld)
       orbiter.camera.set({ target: target })
       orbiter.updateCamera()
-    } else {
+    } else if (orbiter.drag) {
       const dx = x - orbiter.dragPos[0]
       const dy = y - orbiter.dragPos[1]
       orbiter.dragPos[0] = x
       orbiter.dragPos[1] = y
 
       // TODO: how to have resolution independed scaling? will this code behave differently with retina/pixelRatio=2?
-      orbiter.lat = clamp(orbiter.lat + dy / 200, -Math.PI / 2, Math.PI / 2)
+      orbiter.lat = clamp(orbiter.lat + dy / orbiter.dragSlowdown, -90, 90)
 
-      orbiter.lon += dx / 200
-      orbiter.lon = orbiter.lon % (2 * Math.PI)
+      orbiter.lon -= dx / orbiter.dragSlowdown
+      orbiter.lon = orbiter.lon % (360)
 
       orbiter.updateCamera()
     }
@@ -247,5 +249,3 @@ Orbiter.prototype.setup = function () {
 module.exports = function createOrbiter (opts) {
   return new Orbiter(opts)
 }
-module.exports.latLonToXyz = latLonToXyz
-module.exports.xyzToLatLon = xyzToLatLon
