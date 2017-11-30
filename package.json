@@ -34,7 +34,7 @@
   "dependencies": {
     "interpolate-angle": "^1.0.2",
     "latlon-to-xyz": "^1.0.1",
-    "pex-geom": "^1.0.0",
+    "pex-geom": "^2.0.0",
     "pex-math": "^2.0.0",
     "raf": "^3.4.0",
     "xyz-to-latlon": "^1.0.2"
