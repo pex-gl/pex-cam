@@ -87,6 +87,9 @@ Orbiter.prototype.updateCamera = function () {
   const position = this.camera.position
   const target = this.camera.target
 
+  this.lat = clamp(this.lat, -89.5, 89.5)
+  this.lon = this.lon % (360)
+
   this.currentLat = toDegrees(
     interpolateAngle(
       (toRadians(this.currentLat) + 2 * Math.PI) % (2 * Math.PI),
@@ -177,12 +180,10 @@ Orbiter.prototype.setup = function () {
       orbiter.dragPos[0] = x
       orbiter.dragPos[1] = y
 
-      // TODO: how to have resolution independed scaling? will this code behave differently with retina/pixelRatio=2?
-      orbiter.lat = clamp(orbiter.lat + dy / orbiter.dragSlowdown, -90, 90)
-
+      orbiter.lat += dy / orbiter.dragSlowdown
       orbiter.lon -= dx / orbiter.dragSlowdown
-      orbiter.lon = orbiter.lon % (360)
 
+      // TODO: how to have resolution independed scaling? will this code behave differently with retina/pixelRatio=2?
       orbiter.updateCamera()
     }
   }
