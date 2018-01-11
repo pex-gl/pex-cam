@@ -34,6 +34,8 @@ function Orbiter (opts) {
     maxDistance: 1,
     zoomSlowdown: 400,
     zoom: true,
+    minZoom: 2,
+    maxZoom: 8,
     pan: true,
     drag: true,
     dragSlowdown: 4,
@@ -199,6 +201,8 @@ Orbiter.prototype.setup = function () {
     }
     orbiter.distance *= 1 + dy / orbiter.zoomSlowdown
     orbiter.distance = clamp(orbiter.distance, orbiter.minDistance, orbiter.maxDistance)
+    if (orbiter.distance < orbiter.minZoom) orbiter.distance = orbiter.minZoom
+    if (orbiter.distance > orbiter.maxZoom) orbiter.distance = orbiter.maxZoom
     orbiter.updateCamera()
   }
 
