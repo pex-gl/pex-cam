@@ -27,7 +27,9 @@ const camera = createCamera({
 createOrbiter({
   camera: camera,
   element: ctx.gl.canvas,
-  easing: 0.1
+  easing: 0.1,
+  minDistance: 3,
+  maxDistance: 7
 })
 
 const clearCmd = {
