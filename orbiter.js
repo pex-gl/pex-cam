@@ -65,8 +65,8 @@ Orbiter.prototype.set = function (opts) {
     this.currentLon = this.lon
     this.distance = distance
     this.currentDistance = this.distance
-    this.minDistance = distance / 10
-    this.maxDistance = distance * 10
+    this.minDistance = opts.minDistance || distance / 10
+    this.maxDistance = opts.maxDistance || distance * 10
   }
 }
 
