@@ -1,6 +1,6 @@
 {
   "name": "pex-cam",
-  "version": "2.4.3",
+  "version": "2.5.0",
   "description": "Camera models and modifiers.",
   "main": "index.js",
   "scripts": {
