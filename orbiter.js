@@ -54,7 +54,6 @@ Orbiter.prototype.set = function (opts) {
   if (opts.lat !== undefined) {
 
   }
-  Object.assign(this, opts)
 
   if (opts.camera) {
     const distance = vec3.distance(opts.camera.position, opts.camera.target)
@@ -68,6 +67,8 @@ Orbiter.prototype.set = function (opts) {
     this.minDistance = opts.minDistance || distance / 10
     this.maxDistance = opts.maxDistance || distance * 10
   }
+
+  Object.assign(this, opts)
 }
 
 Orbiter.prototype.updateWindowSize = function () {
