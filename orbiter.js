@@ -51,10 +51,6 @@ function Orbiter (opts) {
 }
 
 Orbiter.prototype.set = function (opts) {
-  if (opts.lat !== undefined) {
-
-  }
-
   if (opts.camera) {
     const distance = vec3.distance(opts.camera.position, opts.camera.target)
     const latLon = xyzToLatLon(vec3.normalize(vec3.sub(vec3.copy(opts.camera.position), opts.camera.target)))
