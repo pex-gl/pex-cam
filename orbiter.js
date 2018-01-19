@@ -106,7 +106,7 @@ Orbiter.prototype.updateCamera = function () {
   // set new camera position according to the current
   // rotation at distance relative to target
   latLonToXyz(this.currentLat, this.currentLon, position)
-  vec3.scale(position, this.distance)
+  vec3.scale(position, this.currentDistance)
   vec3.add(position, target)
 
   this.camera.set({

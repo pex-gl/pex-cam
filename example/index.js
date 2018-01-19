@@ -24,7 +24,7 @@ const camera = createCamera({
   // element: gl.canvas
 // })
 
-createOrbiter({
+const orbiter = createOrbiter({
   camera: camera,
   element: ctx.gl.canvas,
   easing: 0.1
@@ -104,6 +104,30 @@ window.addEventListener('resize', (e) => {
     aspect: ctx.gl.canvas.width / ctx.gl.canvas.height
   })
 })
+
+var zoom2 = document.createElement('a')
+zoom2.innerText = 'Zoom to 2'
+zoom2.style.position = 'absolute'
+zoom2.style.top = '10px'
+zoom2.style.left = '20px'
+zoom2.style.color = 'white'
+zoom2.setAttribute('href', '#')
+zoom2.addEventListener('click', () => {
+  orbiter.set({ distance: 2 })
+})
+document.body.appendChild(zoom2)
+
+var zoom5 = document.createElement('a')
+zoom5.innerText = 'Zoom to 5'
+zoom5.style.position = 'absolute'
+zoom5.style.top = '30px'
+zoom5.style.left = '20px'
+zoom5.style.color = 'white'
+zoom5.setAttribute('href', '#')
+zoom5.addEventListener('click', () => {
+  orbiter.set({ distance: 5 })
+})
+document.body.appendChild(zoom5)
 
 ctx.frame(() => {
   ctx.submit(clearCmd)
