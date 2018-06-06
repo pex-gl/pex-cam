@@ -10,6 +10,7 @@ const toRadians = require('pex-math/utils').toRadians
 const toDegrees = require('pex-math/utils').toDegrees
 const latLonToXyz = require('latlon-to-xyz')
 const xyzToLatLon = require('xyz-to-latlon')
+const offset = require('mouse-event-offset')
 
 function Orbiter (opts) {
   // TODO: split into internal state and public state
@@ -42,7 +43,8 @@ function Orbiter (opts) {
     dragPosPlane: [0, 0, 0],
     clickPosWorld: [0, 0, 0],
     dragPosWorld: [0, 0, 0],
-    panPlane: null
+    panPlane: null,
+    autoUpdate: true
   }
 
   this.set(initialState)
@@ -80,6 +82,7 @@ Orbiter.prototype.updateWindowSize = function () {
 Orbiter.prototype.updateCamera = function () {
   // instad of rotating the object we want to move camera around it
   // state.currRot[3] *= -1
+  if (!this.camera) return
 
   const position = this.camera.position
   const target = this.camera.target
@@ -201,17 +204,19 @@ Orbiter.prototype.setup = function () {
 
   function onMouseDown (e) {
     orbiter.updateWindowSize()
+    const pos = offset(e, window)
     down(
-      e.offsetX || e.clientX || (e.touches ? e.touches[0].clientX : 0),
-      e.offsetY || e.clientY || (e.touches ? e.touches[0].clientY : 0),
+      pos[0],
+      pos[1],
       e.shiftKey || (e.touches && e.touches.length === 2)
     )
   }
 
   function onMouseMove (e) {
+    const pos = offset(e, window)
     move(
-      e.offsetX || e.clientX || (e.touches ? e.touches[0].clientX : 0),
-      e.offsetY || e.clientY || (e.touches ? e.touches[0].clientY : 0),
+      pos[0],
+      pos[1],
       e.shiftKey || (e.touches && e.touches.length === 2)
     )
   }
@@ -225,23 +230,46 @@ Orbiter.prototype.setup = function () {
     e.preventDefault()
   }
 
-  this.element.addEventListener('mousedown', onMouseDown)
-  this.element.addEventListener('touchstart', (e) => {
+  function onTouchStart (e) {
     e.preventDefault()
     onMouseDown(e)
-  })
+  }
+
+  this._onMouseDown = onMouseDown
+  this._onTouchStart = onTouchStart
+  this._onMouseMove = onMouseMove
+  this._onMouseUp = onMouseUp
+  this._onWheel = onWheel
+
+  this.element.addEventListener('mousedown', onMouseDown)
+  this.element.addEventListener('touchstart', onTouchStart)
+  this.element.addEventListener('wheel', onWheel)
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('touchmove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
   window.addEventListener('touchend', onMouseUp)
-  this.element.addEventListener('wheel', onWheel)
 
   this.updateCamera()
 
-  raf(function tick () {
-    orbiter.updateCamera()
-    raf(tick)
-  })
+  if (this.autoUpdate) {
+    const self = this
+    this._rafHandle = raf(function tick () {
+      orbiter.updateCamera()
+      self._rafHandle = raf(tick)
+    })
+  }
+}
+
+Orbiter.prototype.dispose = function () {
+  this.element.removeEventListener('mousedown', this._onMouseDown)
+  this.element.removeEventListener('touchstart', this._onTouchStart)
+  this.element.removeEventListener('wheel', this._onWheel)
+  window.removeEventListener('mousemove', this._onMouseMove)
+  window.removeEventListener('touchmove', this._onMouseMove)
+  window.removeEventListener('mouseup', this._onMouseUp)
+  window.removeEventListener('touchend', this._onMouseUp)
+  raf.cancel(this._rafHandle)
+  this.camera = null
 }
 
 module.exports = function createOrbiter (opts) {
