@@ -10,6 +10,7 @@ const toRadians = require('pex-math/utils').toRadians
 const toDegrees = require('pex-math/utils').toDegrees
 const latLonToXyz = require('latlon-to-xyz')
 const xyzToLatLon = require('xyz-to-latlon')
+const offset = require('mouse-event-offset')
 
 function Orbiter (opts) {
   // TODO: split into internal state and public state
@@ -206,17 +207,19 @@ Orbiter.prototype.setup = function () {
 
   function onMouseDown (e) {
     orbiter.updateWindowSize()
+    const pos = offset(e, window)
     down(
-      e.offsetX || e.clientX || (e.touches ? e.touches[0].clientX : 0),
-      e.offsetY || e.clientY || (e.touches ? e.touches[0].clientY : 0),
+      pos[0],
+      pos[1],
       e.shiftKey || (e.touches && e.touches.length === 2)
     )
   }
 
   function onMouseMove (e) {
+    const pos = offset(e, window)
     move(
-      e.offsetX || e.clientX || (e.touches ? e.touches[0].clientX : 0),
-      e.offsetY || e.clientY || (e.touches ? e.touches[0].clientY : 0),
+      pos[0],
+      pos[1],
       e.shiftKey || (e.touches && e.touches.length === 2)
     )
   }
