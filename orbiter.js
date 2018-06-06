@@ -42,7 +42,8 @@ function Orbiter (opts) {
     dragPosPlane: [0, 0, 0],
     clickPosWorld: [0, 0, 0],
     dragPosWorld: [0, 0, 0],
-    panPlane: null
+    panPlane: null,
+    autoUpdate: true
   }
 
   this.set(initialState)
@@ -241,10 +242,12 @@ Orbiter.prototype.setup = function () {
 
   this.updateCamera()
 
-  raf(function tick () {
-    orbiter.updateCamera()
-    raf(tick)
-  })
+  if (this.autoUpdate) {
+    raf(function tick () {
+      orbiter.updateCamera()
+      raf(tick)
+    })
+  }
 }
 
 module.exports = function createOrbiter (opts) {
