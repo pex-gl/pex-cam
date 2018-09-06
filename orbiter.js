@@ -10,7 +10,12 @@ const toRadians = require('pex-math/utils').toRadians
 const toDegrees = require('pex-math/utils').toDegrees
 const latLonToXyz = require('latlon-to-xyz')
 const xyzToLatLon = require('xyz-to-latlon')
-const offset = require('mouse-event-offset')
+const eventOffset = require('mouse-event-offset')
+
+function offset (e, target) {
+  if (e.touches) return eventOffset(e.touches[0], target)
+  else return eventOffset(e, target)
+}
 
 function Orbiter (opts) {
   // TODO: split into internal state and public state
@@ -245,7 +250,7 @@ Orbiter.prototype.setup = function () {
   this.element.addEventListener('touchstart', onTouchStart)
   this.element.addEventListener('wheel', onWheel)
   window.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('touchmove', onMouseMove)
+  window.addEventListener('touchmove', onMouseMove, { passive: false })
   window.addEventListener('mouseup', onMouseUp)
   window.addEventListener('touchend', onMouseUp)
 
