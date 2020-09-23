@@ -49,7 +49,8 @@ function Orbiter (opts) {
     clickPosWorld: [0, 0, 0],
     dragPosWorld: [0, 0, 0],
     panPlane: null,
-    autoUpdate: true
+    autoUpdate: true,
+    wheelPreventDefault: true
   }
 
   this.set(initialState)
@@ -232,7 +233,7 @@ Orbiter.prototype.setup = function () {
 
   function onWheel (e) {
     scroll(e.deltaY)
-    e.preventDefault()
+    if (orbiter.wheelPreventDefault) e.preventDefault()
   }
 
   function onTouchStart (e) {
