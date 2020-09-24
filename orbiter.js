@@ -195,11 +195,12 @@ Orbiter.prototype.setup = function () {
 
   function scroll (dy) {
     if (!orbiter.zoom) {
-      return
+      return true
     }
     orbiter.distance *= 1 + dy / orbiter.zoomSlowdown
     orbiter.distance = clamp(orbiter.distance, orbiter.minDistance, orbiter.maxDistance)
     orbiter.updateCamera()
+    return false
   }
 
   function onMouseDown (e) {
@@ -226,8 +227,10 @@ Orbiter.prototype.setup = function () {
   }
 
   function onWheel (e) {
-    scroll(e.deltaY)
-    e.preventDefault()
+    if (scroll(e.deltaY) === false) {
+      e.preventDefault()
+      return false
+    }
   }
 
   function onTouchStart (e) {
