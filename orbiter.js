@@ -24,7 +24,11 @@ function Orbiter (opts) {
     invViewMatrix: mat4.create(),
     dragging: false,
     lat: 0, // Y
+    minLat: -89.5,
+    maxLat: 89.5,
     lon: 0, // XZ
+    minLon: -Infinity,
+    maxLon: Infinity,
     currentLat: 0,
     currentLon: 0,
     easing: 1,
@@ -49,7 +53,8 @@ function Orbiter (opts) {
     clickPosWorld: [0, 0, 0],
     dragPosWorld: [0, 0, 0],
     panPlane: null,
-    autoUpdate: true
+    autoUpdate: true,
+    wheelPreventDefault: true
   }
 
   this.set(initialState)
@@ -92,8 +97,8 @@ Orbiter.prototype.updateCamera = function () {
   const position = this.camera.position
   const target = this.camera.target
 
-  this.lat = clamp(this.lat, -89.5, 89.5)
-  this.lon = this.lon % (360)
+  this.lat = clamp(this.lat, this.minLat, this.maxLat)
+  this.lon = clamp(this.lon, this.minLon, this.maxLon) % 360
 
   this.currentLat = toDegrees(
     interpolateAngle(
@@ -232,7 +237,7 @@ Orbiter.prototype.setup = function () {
 
   function onWheel (e) {
     scroll(e.deltaY)
-    e.preventDefault()
+    if (orbiter.wheelPreventDefault) e.preventDefault()
   }
 
   function onTouchStart (e) {
