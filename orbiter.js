@@ -10,7 +10,12 @@ const toRadians = require('pex-math/utils').toRadians
 const toDegrees = require('pex-math/utils').toDegrees
 const latLonToXyz = require('latlon-to-xyz')
 const xyzToLatLon = require('xyz-to-latlon')
-const offset = require('mouse-event-offset')
+const eventOffset = require('mouse-event-offset')
+
+function offset (e, target) {
+  if (e.touches) return eventOffset(e.touches[0], target)
+  else return eventOffset(e, target)
+}
 
 function Orbiter (opts) {
   // TODO: split into internal state and public state
@@ -19,7 +24,11 @@ function Orbiter (opts) {
     invViewMatrix: mat4.create(),
     dragging: false,
     lat: 0, // Y
+    minLat: -89.5,
+    maxLat: 89.5,
     lon: 0, // XZ
+    minLon: -Infinity,
+    maxLon: Infinity,
     currentLat: 0,
     currentLon: 0,
     easing: 1,
@@ -44,7 +53,7 @@ function Orbiter (opts) {
     clickPosWorld: [0, 0, 0],
     dragPosWorld: [0, 0, 0],
     panPlane: null,
-    autoUpdate: true
+    autoUpdate: true    
   }
 
   this.set(initialState)
@@ -87,8 +96,8 @@ Orbiter.prototype.updateCamera = function () {
   const position = this.camera.position
   const target = this.camera.target
 
-  this.lat = clamp(this.lat, -89.5, 89.5)
-  this.lon = this.lon % (360)
+  this.lat = clamp(this.lat, this.minLat, this.maxLat)
+  this.lon = clamp(this.lon, this.minLon, this.maxLon) % 360
 
   this.currentLat = toDegrees(
     interpolateAngle(
@@ -195,17 +204,17 @@ Orbiter.prototype.setup = function () {
 
   function scroll (dy) {
     if (!orbiter.zoom) {
-      return true
+      return false
     }
     orbiter.distance *= 1 + dy / orbiter.zoomSlowdown
     orbiter.distance = clamp(orbiter.distance, orbiter.minDistance, orbiter.maxDistance)
     orbiter.updateCamera()
-    return false
+    return true
   }
 
   function onMouseDown (e) {
     orbiter.updateWindowSize()
-    const pos = offset(e, window)
+    const pos = offset(e, orbiter.element)
     down(
       pos[0],
       pos[1],
@@ -214,7 +223,7 @@ Orbiter.prototype.setup = function () {
   }
 
   function onMouseMove (e) {
-    const pos = offset(e, window)
+    const pos = offset(e, orbiter.element)
     move(
       pos[0],
       pos[1],
@@ -227,7 +236,7 @@ Orbiter.prototype.setup = function () {
   }
 
   function onWheel (e) {
-    if (scroll(e.deltaY) === false) {
+    if (scroll(e.deltaY) === true) {
       e.preventDefault()
       return false
     }
@@ -248,7 +257,7 @@ Orbiter.prototype.setup = function () {
   this.element.addEventListener('touchstart', onTouchStart)
   this.element.addEventListener('wheel', onWheel)
   window.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('touchmove', onMouseMove)
+  window.addEventListener('touchmove', onMouseMove, { passive: false })
   window.addEventListener('mouseup', onMouseUp)
   window.addEventListener('touchend', onMouseUp)
 
