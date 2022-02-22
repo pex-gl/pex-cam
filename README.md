@@ -1,76 +1,40 @@
 # pex-cam
 
-Camera models and controllers.
+[![npm version](https://img.shields.io/npm/v/pex-cam)](https://www.npmjs.com/package/pex-cam)
+[![stability-stable](https://img.shields.io/badge/stability-stable-green.svg)](https://www.npmjs.com/package/pex-cam)
+[![npm minzipped size](https://img.shields.io/bundlephobia/minzip/pex-cam)](https://bundlephobia.com/package/pex-cam)
+[![dependencies](https://img.shields.io/librariesio/release/npm/pex-cam)](https://github.com/pex-gl/pex-cam/blob/main/package.json)
+[![types](https://img.shields.io/npm/types/pex-cam)](https://github.com/microsoft/TypeScript)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-fa6673.svg)](https://conventionalcommits.org)
+[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://github.com/prettier/prettier)
+[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://github.com/eslint/eslint)
+[![license](https://img.shields.io/github/license/pex-gl/pex-cam)](https://github.com/pex-gl/pex-cam/blob/main/LICENSE.md)
 
-# API
+Cameras models and controllers for 3D rendering.
 
-## Perspective Camera
+![](https://raw.githubusercontent.com/pex-gl/pex-cam/main/screenshot.gif)
 
-```javascript
-var createPerspectiveCamera = require('pex-cam/perspective')
+## Installation
+
+```bash
+npm install pex-cam
 ```
 
-### `cam = createPerspectiveCamera(opts)`
+## Usage
 
-Creates new perspective camera
-
-- `opts:` object with one or more of the following options
-  - `position`: vec3 - camera position, `[0, 0, 3]`
-  - `target`: vec3 - camera target,  `[0, 0, 0]`
-  - `up`: vec3 - camera up direction, `[0, 1, 0]`
-  - `fov`: Number - vertical field of view, `PI/3 (60 deg)`
-  - `aspect`: Number - aspect ratio , `1`
-  - `near`: Number - near clipping plane, `0.1`
-  - `far`: Number - far clipping plane, `100`
-
-### `cam.set(opts)`
-
-- `opts`: see `createPerspectiveCamera`
-
-### `cam.getViewRay(x, y, windowWidth, windowHeight)`
-
-Create picking ray in view (camera) cooridinates
-
-- `x`: Number - mouse x
-- `y`: Number - mouse y
-- `windowWidth`: Number
-- `windowHeight`: Number
-
-### `cam.getWorldRay(x, y, windowWidth, windowHeight)`
-
-Create picking ray in world coordinates
-
-- `x`: Number - mouse x
-- `y`: Number - mouse y
-- `windowWidth`: Number
-- `windowHeight`: Number
-
-## Orbiter
-
-Orbiter controller
-
-```javascript
-var createOrbiter = require('pex-cam/orbiter')
+```js
+import createCamera from "pex-cam";
+console.log(createCamera);
 ```
 
-### `orbiter = createOrbiter(opts)`
+## API
 
-Creates new orbiter controller
+<!-- api-start -->
 
-- `opts`: object with one or more of the following options
-  - `camera`: PerspectiveCamera - camera to be controlled
-  - `element`: DOM Element - mouse events target, `window`
-  - `easing`: Number, amount of intertia, `0`
-  - `drag`: Boolean - enable drag rotation, `true`
-  - `zoom`: Boolean - enable mouse wheel zooming, `true`
-  - `pan`: Boolean - enable shift + drag panning, `true`
-  - `lat`: Number - latitude of the orbiter position, defaults to camera.position
-  - `lon`: Number - longitude of the orbiter position, defaults to camera.position
+Auto-generated API content.
 
-### `orbiter.set(opts)`
-
-- `opts`: see `createOrbiter`
+<!-- api-end -->
 
 ## License
 
-MIT, see [LICENSE.md](http://github.com/vorg/geom-merge/blob/master/LICENSE.md) for details.
+MIT. See [license file](https://github.com/pex-gl/pex-cam/blob/main/LICENSE.md).
