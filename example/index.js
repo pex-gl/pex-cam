@@ -1,5 +1,6 @@
 import {
-  perspective as createCamera,
+  perspective as createPerspectiveCamera,
+  orthographic as createOrthographicCamera,
   orbiter as createOrbiter,
 } from "../index.js";
 
@@ -11,20 +12,19 @@ import createGUI from "pex-gui";
 
 const canvas = document.createElement("canvas");
 document.querySelector("main").appendChild(canvas);
+
 const ctx = createContext({ canvas: canvas });
 const gui = createGUI(ctx);
 const cube = createCube(0.2);
 
-const State = { distance: 5 };
+const State = { distance: 5, fov: Math.PI / 3 };
 
-const camera = createCamera({
-  fov: Math.PI / 3,
-  aspect: window.innerWidth / window.innerHeight,
-  near: 0.1,
-  far: 100,
+const perspectiveCamera = createPerspectiveCamera({
   position: [3, 3, 3],
-  target: [0, 0, 0],
-  up: [0, 1, 0],
+});
+
+const orthographicCamera = createOrthographicCamera({
+  position: [3, 3, 3],
 });
 
 // const arcball = createArcball({
@@ -32,9 +32,14 @@ const camera = createCamera({
 // element: gl.canvas
 // })
 
-const orbiter = createOrbiter({
-  camera,
-  element: ctx.gl.canvas,
+const perspectiveOrbiter = createOrbiter({
+  camera: perspectiveCamera,
+  element: canvas,
+  easing: 0.1,
+});
+const orthographicOrbiter = createOrbiter({
+  camera: orthographicCamera,
+  element: canvas,
   easing: 0.1,
 });
 
@@ -45,16 +50,18 @@ const clearCmd = {
   }),
 };
 
+const offsets = Array.from({ length: 200 }, () => random.vec3());
+
 const drawCubeCmd = {
   pipeline: ctx.pipeline({
     vert: /* glsl */ `
     attribute vec3 aPosition;
+    attribute vec3 aOffset;
     attribute vec3 aNormal;
 
     uniform mat4 uProjectionMatrix;
     uniform mat4 uViewMatrix;
     uniform mat4 uModelMatrix;
-    uniform vec3 uPosition;
 
     varying vec3 vNormal;
 
@@ -110,13 +117,11 @@ const drawCubeCmd = {
       mat4 modelViewMatrix = uViewMatrix * uModelMatrix;
       mat3 normalMatrix = mat3(transpose(inverse(modelViewMatrix)));
       vNormal = normalMatrix * aNormal;
-      gl_Position = uProjectionMatrix * modelViewMatrix * vec4(aPosition + uPosition, 1.0);
+      gl_Position = uProjectionMatrix * modelViewMatrix * vec4(aPosition + aOffset, 1.0);
     }
   `,
     frag: /* glsl */ `
-    #ifdef GL_ES
     precision highp float;
-    #endif
 
     varying vec3 vNormal;
 
@@ -127,45 +132,85 @@ const drawCubeCmd = {
   `,
     depthTest: true,
   }),
-  uniforms: {
-    uProjectionMatrix: camera.projectionMatrix,
-    uViewMatrix: camera.viewMatrix,
-    uModelMatrix: mat4.create(),
-    uPosition: [0, 0, 0],
-  },
   attributes: {
     aPosition: ctx.vertexBuffer(cube.positions),
     aNormal: ctx.vertexBuffer(cube.normals),
+    aOffset: { buffer: ctx.vertexBuffer(offsets), divisor: 1 },
   },
+  instances: offsets.length,
   indices: ctx.indexBuffer(cube.cells),
 };
 
-const instances = [];
-for (let i = 0; i < 200; i++) {
-  instances.push({
-    uniforms: {
-      uPosition: random.vec3(),
+const onResize = () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const aspect = canvas.width / canvas.height;
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const viewWidth = viewportWidth * 0.5;
+  const viewSize = 5;
+
+  const size = [viewportWidth, viewportHeight];
+  const totalSize = [viewportWidth, viewportHeight];
+
+  perspectiveCamera.set({
+    aspect,
+    view: {
+      offset: [viewWidth * 0.5, 0],
+      size,
+      totalSize,
     },
   });
-}
 
-const onResize = () => {
-  ctx.gl.canvas.width = window.innerWidth;
-  ctx.gl.canvas.height = window.innerHeight;
-  camera.set({
-    aspect: ctx.gl.canvas.width / ctx.gl.canvas.height,
+  orthographicCamera.set({
+    left: (-0.5 * viewSize * aspect) / 2,
+    right: (0.5 * viewSize * aspect) / 2,
+    top: (0.5 * viewSize) / 2,
+    bottom: (-0.5 * viewSize) / 2,
+    view: {
+      offset: [-viewWidth * 0.5, 0],
+      size,
+      totalSize,
+    },
   });
 };
 window.addEventListener("resize", onResize);
 onResize();
 
-gui.addTab("Controls");
+gui.addColumn("Shared");
 gui.addParam("Distance", State, "distance", { min: 2, max: 20 }, () => {
-  orbiter.set({ distance: State.distance });
+  perspectiveOrbiter.set({ distance: State.distance });
+  orthographicOrbiter.set({ distance: State.distance });
 });
+gui.addColumn("Perspective");
+gui.addParam(
+  "fov",
+  State,
+  "fov",
+  { min: Math.PI / 8, max: Math.PI / 2 },
+  () => {
+    perspectiveCamera.set({ fov: State.fov });
+  }
+);
 
 ctx.frame(() => {
   ctx.submit(clearCmd);
-  ctx.submit(drawCubeCmd, instances);
+  ctx.submit(drawCubeCmd, {
+    uniforms: {
+      uProjectionMatrix: perspectiveCamera.projectionMatrix,
+      uViewMatrix: perspectiveCamera.viewMatrix,
+      uModelMatrix: mat4.create(),
+    },
+  });
+  ctx.submit(drawCubeCmd, {
+    uniforms: {
+      uProjectionMatrix: orthographicCamera.projectionMatrix,
+      uViewMatrix: orthographicCamera.viewMatrix,
+      uModelMatrix: mat4.create(),
+    },
+  });
+
   gui.draw();
 });
