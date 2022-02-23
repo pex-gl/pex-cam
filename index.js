@@ -3,7 +3,7 @@
  * @module index
  */
 
-import Camera from "./camera";
+import Camera from "./camera.js";
 import PerspectiveCamera from "./perspective.js";
 import OrthographicCamera from "./orthographic.js";
 import OrbiterControls from "./orbiter.js";
