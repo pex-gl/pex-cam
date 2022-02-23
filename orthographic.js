@@ -3,13 +3,15 @@ import { mat4, vec3 } from "pex-math";
 import Camera from "./camera.js";
 
 export class OrthographicCamera extends Camera {
-  static DEFAULT_OPTIONS = {
-    left: -1,
-    right: 1,
-    bottom: -1,
-    top: 1,
-    zoom: 1,
-  };
+  static get DEFAULT_OPTIONS() {
+    return {
+      left: -1,
+      right: 1,
+      bottom: -1,
+      top: 1,
+      zoom: 1,
+    };
+  }
 
   constructor(opts = {}) {
     super();

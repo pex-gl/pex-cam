@@ -3,9 +3,11 @@ import { vec3, mat4 } from "pex-math";
 import Camera from "./camera.js";
 
 export class PerspectiveCamera extends Camera {
-  static DEFAULT_OPTIONS = {
-    fov: Math.PI / 3,
-  };
+  static get DEFAULT_OPTIONS() {
+    return {
+      fov: Math.PI / 3,
+    };
+  }
 
   constructor(opts = {}) {
     super();
