@@ -61,6 +61,8 @@ console.log(createCamera);
 <dl>
 <dt><a href="#Radians">Radians</a> : <code>number</code></dt>
 <dd></dd>
+<dt><a href="#Degrees">Degrees</a> : <code>number</code></dt>
+<dd></dd>
 <dt><a href="#CameraView">CameraView</a> : <code>Object</code></dt>
 <dd></dd>
 <dt><a href="#CameraOptions">CameraOptions</a> : <code>Object</code></dt>
@@ -146,6 +148,41 @@ Update the camera
 Camera controls to orbit around a target
 
 **Kind**: global class
+
+- [OrbiterControls](#OrbiterControls)
+  - [new OrbiterControls(opts)](#new_OrbiterControls_new)
+  - [.set(opts)](#OrbiterControls+set)
+  - [.dispose()](#OrbiterControls+dispose)
+
+<a name="new_OrbiterControls_new"></a>
+
+### new OrbiterControls(opts)
+
+Create an instance of OrbiterControls
+
+| Param | Type                                                           |
+| ----- | -------------------------------------------------------------- |
+| opts  | [<code>OrbiterControlsOptions</code>](#OrbiterControlsOptions) |
+
+<a name="OrbiterControls+set"></a>
+
+### orbiterControls.set(opts)
+
+Update the control
+
+**Kind**: instance method of [<code>OrbiterControls</code>](#OrbiterControls)
+
+| Param | Type                        |
+| ----- | --------------------------- |
+| opts  | <code>OrbiterOptions</code> |
+
+<a name="OrbiterControls+dispose"></a>
+
+### orbiterControls.dispose()
+
+Remove all event listeners
+
+**Kind**: instance method of [<code>OrbiterControls</code>](#OrbiterControls)
 <a name="OrthographicCamera"></a>
 
 ## OrthographicCamera ⇐ [<code>Camera</code>](#Camera)
@@ -154,15 +191,6 @@ A class to create an orthographic camera
 
 **Kind**: global class
 **Extends**: [<code>Camera</code>](#Camera)
-**Properties**
-
-| Name     | Type                | Default         |
-| -------- | ------------------- | --------------- |
-| [left]   | <code>number</code> | <code>-1</code> |
-| [right]  | <code>number</code> | <code>1</code>  |
-| [bottom] | <code>number</code> | <code>-1</code> |
-| [top]    | <code>number</code> | <code>1</code>  |
-| [zoom]   | <code>number</code> | <code>1</code>  |
 
 - [OrthographicCamera](#OrthographicCamera) ⇐ [<code>Camera</code>](#Camera)
   - [new OrthographicCamera(opts)](#new_OrthographicCamera_new)
@@ -199,11 +227,6 @@ A class to create a perspective camera
 
 **Kind**: global class
 **Extends**: [<code>Camera</code>](#Camera)
-**Properties**
-
-| Name  | Type                             | Default                  |
-| ----- | -------------------------------- | ------------------------ |
-| [fov] | [<code>Radians</code>](#Radians) | <code>Math.PI / 3</code> |
 
 - [PerspectiveCamera](#PerspectiveCamera) ⇐ [<code>Camera</code>](#Camera)
   - [new PerspectiveCamera(opts)](#new_PerspectiveCamera_new)
@@ -267,6 +290,11 @@ Create a picking ray in world coordinates
 <a name="Radians"></a>
 
 ## Radians : <code>number</code>
+
+**Kind**: global typedef
+<a name="Degrees"></a>
+
+## Degrees : <code>number</code>
 
 **Kind**: global typedef
 <a name="CameraView"></a>
@@ -333,6 +361,26 @@ Create a picking ray in world coordinates
 ## OrbiterControlsOptions : <code>Object</code>
 
 **Kind**: global typedef
+**Properties**
+
+| Name           | Type                             | Default                |
+| -------------- | -------------------------------- | ---------------------- |
+| camera         | [<code>Camera</code>](#Camera)   |                        |
+| [element]      | <code>HTMLElement</code>         | <code>document</code>  |
+| [easing]       | <code>number</code>              | <code>0.1</code>       |
+| [zoom]         | <code>boolean</code>             | <code>true</code>      |
+| [pan]          | <code>boolean</code>             | <code>true</code>      |
+| [drag]         | <code>boolean</code>             | <code>true</code>      |
+| [minDistance]  | <code>number</code>              | <code>0.1</code>       |
+| [maxDistance]  | <code>number</code>              | <code>10</code>        |
+| [minLat]       | [<code>Degrees</code>](#Degrees) | <code>-89.5</code>     |
+| [maxLat]       | [<code>Degrees</code>](#Degrees) | <code>89.5</code>      |
+| [minLon]       | <code>number</code>              | <code>-Infinity</code> |
+| [maxLon]       | <code>number</code>              | <code>Infinity</code>  |
+| [panSlowdown]  | <code>number</code>              | <code>4</code>         |
+| [zoomSlowdown] | <code>number</code>              | <code>400</code>       |
+| [dragSlowdown] | <code>number</code>              | <code>4</code>         |
+| [autoUpdate]   | <code>boolean</code>             | <code>true</code>      |
 
 <!-- api-end -->
 

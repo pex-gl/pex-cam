@@ -5,11 +5,6 @@ import Camera from "./camera.js";
 /**
  * A class to create an orthographic camera
  * @extends Camera
- * @property {number} [left=-1]
- * @property {number} [right=1]
- * @property {number} [bottom=-1]
- * @property {number} [top=1]
- * @property {number} [zoom=1]
  */
 class OrthographicCamera extends Camera {
   static get DEFAULT_OPTIONS() {

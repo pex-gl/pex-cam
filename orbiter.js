@@ -1,4 +1,4 @@
-import { vec3, mat4, utils } from "pex-math";
+import { vec2, vec3, utils } from "pex-math";
 import pexGeom from "pex-geom";
 
 import raf from "raf";
@@ -10,100 +10,114 @@ import eventOffset from "mouse-event-offset";
 const { ray } = pexGeom;
 const { clamp, lerp, toRadians, toDegrees } = utils;
 
-function offset(e, target) {
-  if (e.touches) return eventOffset(e.touches[0], target);
-  else return eventOffset(e, target);
-}
-
 /**
  * Camera controls to orbit around a target
  */
 class OrbiterControls {
-  constructor(opts) {
-    // TODO: split into internal state and public state
-    const initialState = {
-      camera: opts.camera,
-      invViewMatrix: mat4.create(),
-      dragging: false,
-      lat: 0, // Y
-      minLat: -89.5,
-      maxLat: 89.5,
-      lon: 0, // XZ
-      minLon: -Infinity,
-      maxLon: Infinity,
-      currentLat: 0,
-      currentLon: 0,
-      easing: 1,
-      element: opts.element || window,
-      width: 0,
-      height: 0,
-      clickPosWindow: [0, 0],
-      dragPos: [0, 0, 0],
-      dragPosWindow: [0, 0],
-      distance: 1,
-      currentDistance: 1,
-      minDistance: 1,
-      maxDistance: 1,
-      zoomSlowdown: 400,
+  static get DEFAULT_OPTIONS() {
+    return {
+      element: document,
+      easing: 0.1,
+
       zoom: true,
       pan: true,
       drag: true,
+
+      minDistance: 0.1,
+      maxDistance: 10,
+      minLat: -89.5,
+      maxLat: 89.5,
+      minLon: -Infinity,
+      maxLon: Infinity,
+      panSlowdown: 4,
+      zoomSlowdown: 400,
       dragSlowdown: 4,
-      clickTarget: [0, 0, 0],
-      clickPosPlane: [0, 0, 0],
-      dragPosPlane: [0, 0, 0],
-      clickPosWorld: [0, 0, 0],
-      dragPosWorld: [0, 0, 0],
-      panPlane: null,
+
       autoUpdate: true,
     };
+  }
 
-    this.set(initialState);
-    this.set(opts);
+  get domElement() {
+    return this.element === document ? this.element.body : this.element;
+  }
+
+  /**
+   * Create an instance of OrbiterControls
+   * @param {import("./types.js").OrbiterControlsOptions} opts
+   */
+  constructor(opts) {
+    // Internals
+    // Set initially by .set
+    this.lat = null; // Y
+    this.lon = null; // XZ
+    this.currentLat = null;
+    this.currentLon = null;
+    this.distance = null;
+    this.currentDistance = null;
+
+    // Updated by user interaction
+    this.panning = false;
+    this.dragging = false;
+    this.zooming = false;
+    this.width = 0;
+    this.height = 0;
+
+    this.zoomTouchDistance = null;
+
+    this.panPlane = null;
+    this.clickTarget = [0, 0, 0];
+    this.clickPosWorld = [0, 0, 0];
+    this.clickPosPlane = [0, 0, 0];
+    this.dragPos = [0, 0, 0];
+    this.dragPosWorld = [0, 0, 0];
+    this.dragPosPlane = [0, 0, 0];
+
+    // TODO: add ability to set lat/lng instead of position/target
+    this.set({
+      ...OrbiterControls.DEFAULT_OPTIONS,
+      ...opts,
+    });
     this.setup();
   }
 
+  /**
+   * Update the control
+   * @param {import("./types.js").OrbiterOptions} opts
+   */
   set(opts) {
+    Object.assign(this, opts);
+
     if (opts.camera) {
-      const distance = vec3.distance(opts.camera.position, opts.camera.target);
       const latLon = xyzToLatLon(
         vec3.normalize(
           vec3.sub(vec3.copy(opts.camera.position), opts.camera.target)
         )
       );
+      const distance =
+        opts.distance ||
+        vec3.distance(opts.camera.position, opts.camera.target);
+
       this.lat = latLon[0];
       this.lon = latLon[1];
       this.currentLat = this.lat;
       this.currentLon = this.lon;
       this.distance = distance;
       this.currentDistance = this.distance;
-      this.minDistance = opts.minDistance || distance / 10;
-      this.maxDistance = opts.maxDistance || distance * 10;
-    }
-
-    Object.assign(this, opts);
-  }
-
-  updateWindowSize() {
-    const width = this.element.clientWidth || this.element.innerWidth;
-    const height = this.element.clientHeight || this.element.innerHeight;
-    if (width !== this.width) {
-      this.width = width;
-      this.height = height;
-      this.radius = Math.min(this.width / 2, this.height / 2);
     }
   }
 
   updateCamera() {
     // instad of rotating the object we want to move camera around it
-    // state.currRot[3] *= -1
     if (!this.camera) return;
 
     const position = this.camera.position;
     const target = this.camera.target;
 
     this.lat = clamp(this.lat, this.minLat, this.maxLat);
-    this.lon = clamp(this.lon, this.minLon, this.maxLon) % 360;
+
+    if (this.minLon !== -Infinity && this.maxLon !== Infinity) {
+      this.lon = clamp(this.lon, this.minLon, this.maxLon) % 360;
+    }
 
     this.currentLat = toDegrees(
       interpolateAngle(
@@ -112,218 +126,240 @@ class OrbiterControls {
         this.easing
       )
     );
-    this.currentLon = toDegrees(
-      interpolateAngle(
-        (toRadians(this.currentLon) + 2 * Math.PI) % (2 * Math.PI),
-        (toRadians(this.lon) + 2 * Math.PI) % (2 * Math.PI),
-        this.easing
-      )
-    );
+
+    this.currentLon += (this.lon - this.currentLon) * this.easing;
+
     this.currentDistance = lerp(
       this.currentDistance,
       this.distance,
       this.easing
     );
 
-    // set new camera position according to the current
-    // rotation at distance relative to target
+    // Set position from lat/lon
     latLonToXyz(this.currentLat, this.currentLon, position);
+
+    // Move position according to distance and target
     vec3.scale(position, this.currentDistance);
     vec3.add(position, target);
 
-    if (this.camera.zoom) {
-      this.camera.set({ zoom: vec3.length(position) });
-    }
-
-    this.camera.set({
-      position,
-    });
+    if (this.camera.zoom) this.camera.set({ zoom: vec3.length(position) });
+    this.camera.set({ position });
   }
 
-  setup() {
-    const orbiter = this;
+  updateWindowSize() {
+    const width = this.domElement.clientWidth || this.domElement.innerWidth;
+    const height = this.domElement.clientHeight || this.domElement.innerHeight;
 
-    function down(x, y, shift) {
-      orbiter.dragging = true;
-      orbiter.dragPos[0] = x;
-      orbiter.dragPos[1] = y;
-      if (shift && orbiter.pan) {
-        orbiter.clickPosWindow[0] = x;
-        orbiter.clickPosWindow[1] = y;
-        vec3.set(orbiter.clickTarget, orbiter.camera.target);
-        const targetInViewSpace = vec3.multMat4(
-          vec3.copy(orbiter.clickTarget),
-          orbiter.camera.viewMatrix
-        );
-        orbiter.panPlane = [targetInViewSpace, [0, 0, 1]];
-        ray.hitTestPlane(
-          orbiter.camera.getViewRay(
-            orbiter.clickPosWindow[0],
-            orbiter.clickPosWindow[1],
-            orbiter.width,
-            orbiter.height
-          ),
-          orbiter.panPlane[0],
-          orbiter.panPlane[1],
-          orbiter.clickPosPlane
-        );
-        ray.hitTestPlane(
-          orbiter.camera.getViewRay(
-            orbiter.dragPosWindow[0],
-            orbiter.dragPosWindow[1],
-            orbiter.width,
-            orbiter.height
-          ),
-          orbiter.panPlane[0],
-          orbiter.panPlane[1],
-          orbiter.dragPosPlane
-        );
-      } else {
-        orbiter.panPlane = null;
-      }
+    if (width !== this.width) this.width = width;
+    if (height !== this.height) this.height = height;
+  }
+
+  handleDragStart(position) {
+    this.dragging = true;
+    this.dragPos = position;
+  }
+
+  handlePanZoomStart(touch0, touch1) {
+    this.dragging = false;
+
+    if (this.zoom && touch1) {
+      this.zooming = true;
+      this.zoomTouchDistance = vec2.distance(touch1, touch0);
     }
 
-    function move(x, y, shift) {
-      if (!orbiter.dragging) {
-        return;
-      }
-      if (shift && orbiter.panPlane) {
-        orbiter.dragPosWindow[0] = x;
-        orbiter.dragPosWindow[1] = y;
-        ray.hitTestPlane(
-          orbiter.camera.getViewRay(
-            orbiter.clickPosWindow[0],
-            orbiter.clickPosWindow[1],
-            orbiter.width,
-            orbiter.height
-          ),
-          orbiter.panPlane[0],
-          orbiter.panPlane[1],
-          orbiter.clickPosPlane
-        );
-        ray.hitTestPlane(
-          orbiter.camera.getViewRay(
-            orbiter.dragPosWindow[0],
-            orbiter.dragPosWindow[1],
-            orbiter.width,
-            orbiter.height
-          ),
-          orbiter.panPlane[0],
-          orbiter.panPlane[1],
-          orbiter.dragPosPlane
-        );
-        mat4.set(orbiter.invViewMatrix, orbiter.camera.viewMatrix);
-        mat4.invert(orbiter.invViewMatrix);
-        vec3.multMat4(
-          vec3.set(orbiter.clickPosWorld, orbiter.clickPosPlane),
-          orbiter.invViewMatrix
-        );
-        vec3.multMat4(
-          vec3.set(orbiter.dragPosWorld, orbiter.dragPosPlane),
-          orbiter.invViewMatrix
-        );
-        const diffWorld = vec3.sub(
-          vec3.copy(orbiter.dragPosWorld),
-          orbiter.clickPosWorld
-        );
-        const target = vec3.sub(vec3.copy(orbiter.clickTarget), diffWorld);
-        orbiter.camera.set({ target });
-        orbiter.updateCamera();
-      } else if (orbiter.drag) {
-        const dx = x - orbiter.dragPos[0];
-        const dy = y - orbiter.dragPos[1];
-        orbiter.dragPos[0] = x;
-        orbiter.dragPos[1] = y;
+    const camera = this.camera;
 
-        orbiter.lat += dy / orbiter.dragSlowdown;
-        orbiter.lon -= dx / orbiter.dragSlowdown;
+    if (this.pan && camera) {
+      this.panning = true;
+      this.updateWindowSize();
 
-        // TODO: how to have resolution independed scaling? will this code behave differently with retina/pixelRatio=2?
-        orbiter.updateCamera();
-      }
-    }
+      // TODO: use dragPos?
+      const clickPosWindow = touch1
+        ? [(touch0[0] + touch1[0]) * 0.5, (touch0[1] + touch1[1]) * 0.5]
+        : touch0;
 
-    function up() {
-      orbiter.dragging = false;
-      orbiter.panPlane = null;
-    }
-
-    function scroll(dy) {
-      if (!orbiter.zoom) {
-        return false;
-      }
-      orbiter.distance *= 1 + dy / orbiter.zoomSlowdown;
-      orbiter.distance = clamp(
-        orbiter.distance,
-        orbiter.minDistance,
-        orbiter.maxDistance
+      vec3.set(this.clickTarget, camera.target);
+      const targetInViewSpace = vec3.multMat4(
+        vec3.copy(this.clickTarget),
+        camera.viewMatrix
       );
-      orbiter.updateCamera();
-      return true;
+      this.panPlane = [targetInViewSpace, [0, 0, 1]];
+
+      ray.hitTestPlane(
+        camera.getViewRay(
+          clickPosWindow[0],
+          clickPosWindow[1],
+          this.width,
+          this.height
+        ),
+        this.panPlane[0],
+        this.panPlane[1],
+        this.clickPosPlane
+      );
+    }
+  }
+
+  handleDragMove(position) {
+    const dx = position[0] - this.dragPos[0];
+    const dy = position[1] - this.dragPos[1];
+
+    this.lat += dy / this.dragSlowdown;
+    this.lon -= dx / this.dragSlowdown;
+
+    this.dragPos = position;
+  }
+
+  handlePanZoomMove(touch0, touch1) {
+    if (this.zoom && touch1) {
+      const distance = vec2.distance(touch1, touch0);
+      this.handleZoom(this.zoomTouchDistance - distance);
+      this.zoomTouchDistance = distance;
     }
 
-    function onMouseDown(e) {
-      orbiter.updateWindowSize();
-      const pos = offset(e, orbiter.element);
-      down(pos[0], pos[1], e.shiftKey || (e.touches && e.touches.length === 2));
-    }
+    const camera = this.camera;
 
-    function onMouseMove(e) {
-      const pos = offset(e, orbiter.element);
-      move(pos[0], pos[1], e.shiftKey || (e.touches && e.touches.length === 2));
-    }
+    if (this.pan && camera && this.panPlane) {
+      const dragPosWindow = touch1
+        ? [(touch0[0] + touch1[0]) * 0.5, (touch0[1] + touch1[1]) * 0.5]
+        : touch0;
 
-    function onMouseUp() {
-      up();
-    }
+      ray.hitTestPlane(
+        camera.getViewRay(
+          dragPosWindow[0],
+          dragPosWindow[1],
+          this.width,
+          this.height
+        ),
+        this.panPlane[0],
+        this.panPlane[1],
+        this.dragPosPlane
+      );
 
-    function onWheel(e) {
-      if (scroll(e.deltaY) === true) {
-        e.preventDefault();
-        return false;
-      }
-    }
+      vec3.multMat4(
+        vec3.set(this.clickPosWorld, this.clickPosPlane),
+        camera.invViewMatrix
+      );
+      vec3.multMat4(
+        vec3.set(this.dragPosWorld, this.dragPosPlane),
+        camera.invViewMatrix
+      );
 
-    function onTouchStart(e) {
-      e.preventDefault();
-      onMouseDown(e);
-    }
-
-    this._onMouseDown = onMouseDown;
-    this._onTouchStart = onTouchStart;
-    this._onMouseMove = onMouseMove;
-    this._onMouseUp = onMouseUp;
-    this._onWheel = onWheel;
-
-    this.element.addEventListener("mousedown", onMouseDown);
-    this.element.addEventListener("touchstart", onTouchStart);
-    this.element.addEventListener("wheel", onWheel);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("touchmove", onMouseMove, { passive: false });
-    window.addEventListener("mouseup", onMouseUp);
-    window.addEventListener("touchend", onMouseUp);
-
-    this.updateCamera();
-
-    if (this.autoUpdate) {
-      const self = this;
-      this._rafHandle = raf(function tick() {
-        orbiter.updateCamera();
-        self._rafHandle = raf(tick);
+      const diffWorld = vec3.sub(
+        vec3.copy(this.dragPosWorld),
+        this.clickPosWorld
+      );
+      camera.set({
+        distance: this.distance,
+        target: vec3.sub(vec3.copy(this.clickTarget), diffWorld),
       });
     }
   }
 
+  handleZoom(dy) {
+    this.distance *= 1 + dy / this.zoomSlowdown;
+    this.distance = clamp(this.distance, this.minDistance, this.maxDistance);
+  }
+
+  handleEnd() {
+    this.dragging = false;
+    this.panning = false;
+    this.zooming = false;
+    this.panPlane = null;
+  }
+
+  setup() {
+    this.onPointerDown = (event) => {
+      const pan =
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        (event.touches && event.touches.length === 2);
+
+      const touch0 = eventOffset(
+        event.touches ? event.touches[0] : event,
+        this.domElement
+      );
+      if (this.drag && !pan) {
+        this.handleDragStart(touch0);
+      } else if ((this.pan || this.zoom) && pan) {
+        const touch1 =
+          event.touches && eventOffset(event.touches[1], this.domElement);
+        this.handlePanZoomStart(touch0, touch1);
+      }
+    };
+
+    this.onPointerMove = (event) => {
+      const touch0 = eventOffset(
+        event.touches ? event.touches[0] : event,
+        this.domElement
+      );
+      if (this.dragging) {
+        this.handleDragMove(touch0);
+      } else if (this.panning || this.zooming) {
+        if (event.touches && !event.touches[1]) return;
+        const touch1 =
+          event.touches && eventOffset(event.touches[1], this.domElement);
+        this.handlePanZoomMove(touch0, touch1);
+      }
+    };
+
+    this.onPointerUp = () => {
+      this.handleEnd();
+    };
+
+    this.onTouchStart = (event) => {
+      event.preventDefault();
+
+      if (event.touches.length <= 2) this.onPointerDown(event);
+    };
+
+    this.onTouchMove = (event) => {
+      !!event.cancelable && event.preventDefault();
+
+      if (event.touches.length <= 2) this.onPointerMove(event);
+    };
+
+    this.onWheel = (event) => {
+      if (!this.zoom) return;
+
+      event.preventDefault();
+      this.handleZoom(event.deltaY);
+    };
+
+    if (this.autoUpdate) {
+      const self = this;
+      this._rafHandle = raf(function tick() {
+        self.updateCamera();
+        self._rafHandle = raf(tick);
+      });
+    }
+
+    this.element.addEventListener("mousedown", this.onPointerDown);
+    this.element.addEventListener("wheel", this.onWheel);
+
+    this.element.addEventListener("touchstart", this.onTouchStart);
+    this.element.addEventListener("touchmove", this.onTouchMove, {
+      passive: false,
+    });
+    this.element.addEventListener("touchend", this.onPointerUp);
+
+    document.addEventListener("mousemove", this.onPointerMove);
+    document.addEventListener("mouseup", this.onPointerUp);
+  }
+
+  /**
+   * Remove all event listeners
+   */
   dispose() {
-    this.element.removeEventListener("mousedown", this._onMouseDown);
-    this.element.removeEventListener("touchstart", this._onTouchStart);
-    this.element.removeEventListener("wheel", this._onWheel);
-    window.removeEventListener("mousemove", this._onMouseMove);
-    window.removeEventListener("touchmove", this._onMouseMove);
-    window.removeEventListener("mouseup", this._onMouseUp);
-    window.removeEventListener("touchend", this._onMouseUp);
-    raf.cancel(this._rafHandle);
-    this.camera = null;
+    this.element.removeEventListener("mousedown", this.onPointerDown);
+    this.element.removeEventListener("wheel", this.onWheel);
+
+    this.element.removeEventListener("touchstart", this.onTouchStart);
+    this.element.removeEventListener("touchmove", this.onPointerMove);
+    this.element.removeEventListener("touchend", this.onPointerUp);
+
+    document.removeEventListener("mousemove", this.onPointerMove);
+    document.removeEventListener("mouseup", this.onPointerUp);
   }
 }
 

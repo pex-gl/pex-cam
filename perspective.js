@@ -5,7 +5,6 @@ import Camera from "./camera.js";
 /**
  * A class to create a perspective camera
  * @extends Camera
- * @property {import("./types.js").Radians} [fov=Math.PI / 3]
  */
 class PerspectiveCamera extends Camera {
   static get DEFAULT_OPTIONS() {
