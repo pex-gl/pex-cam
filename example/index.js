@@ -20,17 +20,12 @@ const cube = createCube(0.2);
 const State = { distance: 5, fov: Math.PI / 3 };
 
 const perspectiveCamera = createPerspectiveCamera({
-  position: [3, 3, 3],
+  position: [2, 2, 2],
 });
 
 const orthographicCamera = createOrthographicCamera({
-  position: [3, 3, 3],
+  position: [2, 2, 2],
 });
-
-// const arcball = createArcball({
-// camera: camera,
-// element: gl.canvas
-// })
 
 const perspectiveOrbiter = createOrbiter({
   camera: perspectiveCamera,

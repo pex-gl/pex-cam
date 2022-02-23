@@ -15,7 +15,10 @@ function offset(e, target) {
   else return eventOffset(e, target);
 }
 
-class Orbiter {
+/**
+ * Camera controls to orbit around a target
+ */
+class OrbiterControls {
   constructor(opts) {
     // TODO: split into internal state and public state
     const initialState = {
@@ -270,7 +273,7 @@ class Orbiter {
       move(pos[0], pos[1], e.shiftKey || (e.touches && e.touches.length === 2));
     }
 
-    function onMouseUp(e) {
+    function onMouseUp() {
       up();
     }
 
@@ -324,6 +327,4 @@ class Orbiter {
   }
 }
 
-export default function createOrbiter(opts) {
-  return new Orbiter(opts);
-}
+export default OrbiterControls;

@@ -1,6 +1,9 @@
 import { mat4 } from "pex-math";
 
-export default class Camera {
+/**
+ * An interface for cameras to extend
+ */
+class Camera {
   // Static getter to get different mat for each instances
   static get DEFAULT_OPTIONS() {
     return {
@@ -17,6 +20,10 @@ export default class Camera {
     };
   }
 
+  /**
+   * Update the camera
+   * @param {import("./types.js").CameraOptions} opts
+   */
   set(opts) {
     Object.assign(this, opts);
 
@@ -27,3 +34,5 @@ export default class Camera {
     }
   }
 }
+
+export default Camera;

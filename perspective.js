@@ -2,13 +2,22 @@ import { vec3, mat4 } from "pex-math";
 
 import Camera from "./camera.js";
 
-export class PerspectiveCamera extends Camera {
+/**
+ * A class to create a perspective camera
+ * @extends Camera
+ * @property {import("./types.js").Radians} [fov=Math.PI / 3]
+ */
+class PerspectiveCamera extends Camera {
   static get DEFAULT_OPTIONS() {
     return {
       fov: Math.PI / 3,
     };
   }
 
+  /**
+   * Create an instance of PerspectiveCamera
+   * @param {import("./types.js").CameraOptions & import("./types.js").PerspectiveCameraOptions} opts
+   */
   constructor(opts = {}) {
     super();
 
@@ -19,6 +28,10 @@ export class PerspectiveCamera extends Camera {
     });
   }
 
+  /**
+   * Update the camera
+   * @param {import("./types.js").CameraOptions & import("./types.js").PerspectiveCameraOptions} opts
+   */
   set(opts) {
     super.set(opts);
 
@@ -55,6 +68,14 @@ export class PerspectiveCamera extends Camera {
     }
   }
 
+  /**
+   * Create a picking ray in view (camera) coordinates
+   * @param {number} x mouse x
+   * @param {number} y mouse y
+   * @param {number} windowWidth
+   * @param {number} windowHeight
+   * @returns {ray}
+   */
   getViewRay(x, y, windowWidth, windowHeight) {
     if (this.view) {
       x += this.view.offset[0];
@@ -75,22 +96,28 @@ export class PerspectiveCamera extends Camera {
     return [[0, 0, 0], vec3.normalize([nx, ny, -this.near])];
   }
 
+  /**
+   * Create a picking ray in world coordinates
+   * @param {number} x
+   * @param {number} y
+   * @param {number} windowWidth
+   * @param {number} windowHeight
+   * @returns {ray}
+   */
   getWorldRay(x, y, windowWidth, windowHeight) {
     let ray = this.getViewRay(x, y, windowWidth, windowHeight);
-    let origin = ray[0];
-    let direction = ray[1];
+    const origin = ray[0];
+    const direction = ray[1];
 
     vec3.multMat4(origin, this.invViewMatrix);
     // this is correct as origin is [0, 0, 0] so direction is also a point
     vec3.multMat4(direction, this.invViewMatrix);
 
-    // is this necessary?
+    // TODO: is this necessary?
     vec3.normalize(vec3.sub(direction, origin));
 
     return ray;
   }
 }
 
-export default function createPerspectiveCamera(opts) {
-  return new PerspectiveCamera(opts);
-}
+export default PerspectiveCamera;

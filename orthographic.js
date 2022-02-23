@@ -2,7 +2,16 @@ import { mat4, vec3 } from "pex-math";
 
 import Camera from "./camera.js";
 
-export class OrthographicCamera extends Camera {
+/**
+ * A class to create an orthographic camera
+ * @extends Camera
+ * @property {number} [left=-1]
+ * @property {number} [right=1]
+ * @property {number} [bottom=-1]
+ * @property {number} [top=1]
+ * @property {number} [zoom=1]
+ */
+class OrthographicCamera extends Camera {
   static get DEFAULT_OPTIONS() {
     return {
       left: -1,
@@ -13,6 +22,10 @@ export class OrthographicCamera extends Camera {
     };
   }
 
+  /**
+   * Create an instance of PerspectiveCamera
+   * @param {import("./types.js").CameraOptions & import("./types.js").OrthographicCameraOptions} opts
+   */
   constructor(opts = {}) {
     super();
 
@@ -23,6 +36,10 @@ export class OrthographicCamera extends Camera {
     });
   }
 
+  /**
+   * Update the camera
+   * @param {import("./types.js").CameraOptions & import("./types.js").OrthographicCameraOptions} opts
+   */
   set(opts) {
     super.set(opts);
 
@@ -92,6 +109,4 @@ export class OrthographicCamera extends Camera {
   }
 }
 
-export default function createOrthographicCamera(opts) {
-  return new OrthographicCamera(opts);
-}
+export default OrthographicCamera;
