@@ -1,109 +1,76 @@
 import { vec3, mat4 } from "pex-math";
 
-function setFrustumOffset(
-  camera,
-  x,
-  y,
-  width,
-  height,
-  widthTotal = width,
-  heightTotal = height
-) {
-  const near = camera.near;
-  const far = camera.far;
-  const fov = camera.fov;
+import Camera from "./camera.js";
 
-  const aspectRatio = widthTotal / heightTotal;
+export class PerspectiveCamera extends Camera {
+  static DEFAULT_OPTIONS = {
+    fov: Math.PI / 3,
+  };
 
-  const top = Math.tan(fov * 0.5) * near;
-  const bottom = -top;
-  const left = aspectRatio * bottom;
-  const right = aspectRatio * top;
-  const width_ = Math.abs(right - left);
-  const height_ = Math.abs(top - bottom);
-  const widthNormalized = width_ / widthTotal;
-  const heightNormalized = height_ / heightTotal;
+  constructor(opts = {}) {
+    super();
 
-  const l = left + x * widthNormalized;
-  const r = left + (x + width) * widthNormalized;
-  const b = top - (y + height) * heightNormalized;
-  const t = top - y * heightNormalized;
-
-  camera.aspect = aspectRatio;
-  mat4.frustum(camera.projectionMatrix, l, r, b, t, near, far);
-}
-
-class PerspectiveCamera {
-  constructor(opts) {
     this.set({
-      projectionMatrix: mat4.create(),
-      invViewMatrix: mat4.create(),
-      viewMatrix: mat4.create(),
-      position: [0, 0, 3],
-      target: [0, 0, 0],
-      up: [0, 1, 0],
-      fov: Math.PI / 3,
-      aspect: 1,
-      near: 0.1,
-      far: 100,
+      ...Camera.DEFAULT_OPTIONS,
+      ...PerspectiveCamera.DEFAULT_OPTIONS,
+      ...opts,
     });
-
-    this.set(opts);
   }
 
   set(opts) {
-    Object.assign(this, opts);
+    super.set(opts);
 
-    if (opts.position || opts.target || opts.up) {
-      mat4.lookAt(this.viewMatrix, this.position, this.target, this.up);
-      mat4.set(this.invViewMatrix, this.viewMatrix);
-      mat4.invert(this.invViewMatrix);
-    }
+    if (opts.fov || opts.aspect || opts.near || opts.far || opts.view) {
+      if (this.view) {
+        const aspectRatio = this.view.totalSize[0] / this.view.totalSize[1];
 
-    if (opts.fov || opts.aspect || opts.near || opts.far) {
-      mat4.perspective(
-        this.projectionMatrix,
-        this.fov,
-        this.aspect,
-        this.near,
-        this.far
-      );
-    }
+        const top = Math.tan(this.fov * 0.5) * this.near;
+        const bottom = -top;
+        const left = aspectRatio * bottom;
+        const right = aspectRatio * top;
+        const width = Math.abs(right - left);
+        const height = Math.abs(top - bottom);
+        const widthNormalized = width / this.view.totalSize[0];
+        const heightNormalized = height / this.view.totalSize[1];
 
-    if (this.frustum) {
-      setFrustumOffset(
-        this,
-        this.frustum.offset[0],
-        this.frustum.offset[1],
-        this.frustum.size[0],
-        this.frustum.size[1],
-        this.frustum.totalSize[0],
-        this.frustum.totalSize[1]
-      );
+        const l = left + this.view.offset[0] * widthNormalized;
+        const r =
+          left + (this.view.offset[0] + this.view.size[0]) * widthNormalized;
+        const b =
+          top - (this.view.offset[1] + this.view.size[1]) * heightNormalized;
+        const t = top - this.view.offset[1] * heightNormalized;
+
+        mat4.frustum(this.projectionMatrix, l, r, b, t, this.near, this.far);
+      } else {
+        mat4.perspective(
+          this.projectionMatrix,
+          this.fov,
+          this.aspect,
+          this.near,
+          this.far
+        );
+      }
     }
   }
 
   getViewRay(x, y, windowWidth, windowHeight) {
-    if (this.frustum) {
-      x += this.frustum.offset[0];
-      y += this.frustum.offset[1];
-      windowWidth = this.frustum.totalSize[0];
-      windowHeight = this.frustum.totalSize[1];
+    if (this.view) {
+      x += this.view.offset[0];
+      y += this.view.offset[1];
+      windowWidth = this.view.totalSize[0];
+      windowHeight = this.view.totalSize[1];
     }
     let nx = (2 * x) / windowWidth - 1;
     let ny = 1 - (2 * y) / windowHeight;
 
-    let hNear = 2 * Math.tan(this.fov / 2) * this.near;
-    let wNear = hNear * this.aspect;
+    const hNear = 2 * Math.tan(this.fov / 2) * this.near;
+    const wNear = hNear * this.aspect;
 
     nx *= wNear * 0.5;
     ny *= hNear * 0.5;
 
-    let origin = [0, 0, 0];
-    let direction = vec3.normalize([nx, ny, -this.near]);
-    let ray = [origin, direction];
-
-    return ray;
+    // [origin, direction]
+    return [[0, 0, 0], vec3.normalize([nx, ny, -this.near])];
   }
 
   getWorldRay(x, y, windowWidth, windowHeight) {
