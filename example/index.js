@@ -21,10 +21,12 @@ const State = { distance: 5, fov: Math.PI / 3 };
 
 const perspectiveCamera = createPerspectiveCamera({
   position: [2, 2, 2],
+  target: [0, -0.5, 0],
 });
 
 const orthographicCamera = createOrthographicCamera({
   position: [2, 2, 2],
+  target: [0, -0.5, 0],
 });
 
 const perspectiveOrbiter = createOrbiter({

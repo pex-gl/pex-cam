@@ -12,7 +12,7 @@
 
 Cameras models and controllers for 3D rendering.
 
-![](https://raw.githubusercontent.com/pex-gl/pex-cam/main/screenshot.gif)
+![](https://raw.githubusercontent.com/pex-gl/pex-cam/main/screenshot.png)
 
 ## Installation
 
