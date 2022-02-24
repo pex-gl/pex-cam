@@ -31,11 +31,9 @@ const orthographicCamera = createOrthographicCamera({
 
 const perspectiveOrbiter = createOrbiter({
   camera: perspectiveCamera,
-  element: canvas,
 });
 const orthographicOrbiter = createOrbiter({
   camera: orthographicCamera,
-  element: canvas,
 });
 
 const clearCmd = {
