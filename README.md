@@ -23,8 +23,22 @@ npm install pex-cam
 ## Usage
 
 ```js
-import createCamera from "pex-cam";
-console.log(createCamera);
+import {
+  perspective as createPerspectiveCamera,
+  orbiter as createOrbiter,
+} from "pex-cam";
+
+const perspectiveCamera = createPerspectiveCamera({
+  position: [2, 2, 2],
+  target: [0, -0.5, 0],
+  aspect: window.innerWidth / window.innerHeight,
+});
+
+const perspectiveOrbiter = createOrbiter({
+  camera: perspectiveCamera,
+});
+
+console.log(perspectiveCamera.projectionMatrix);
 ```
 
 ## API
