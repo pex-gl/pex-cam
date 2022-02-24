@@ -304,11 +304,11 @@ Create a picking ray in world coordinates
 **Kind**: global typedef
 **Properties**
 
-| Name      | Type              |
-| --------- | ----------------- |
-| offset    | <code>vec2</code> |
-| size      | <code>vec2</code> |
-| totalSize | <code>vec2</code> |
+| Name      | Type                              |
+| --------- | --------------------------------- |
+| offset    | <code>module:pex-math~vec2</code> |
+| size      | <code>module:pex-math~vec2</code> |
+| totalSize | <code>module:pex-math~vec2</code> |
 
 <a name="CameraOptions"></a>
 
@@ -319,12 +319,12 @@ Create a picking ray in world coordinates
 
 | Name               | Type                                   | Default                    |
 | ------------------ | -------------------------------------- | -------------------------- |
-| [projectionMatrix] | <code>mat4</code>                      | <code>mat4.create()</code> |
-| [invViewMatrix]    | <code>mat4</code>                      | <code>mat4.create()</code> |
-| [viewMatrix]       | <code>mat4</code>                      | <code>mat4.create()</code> |
-| [position]         | <code>vec3</code>                      | <code>[0, 0, 3]</code>     |
-| [target]           | <code>vec3</code>                      | <code>[0, 0, 0]</code>     |
-| [up]               | <code>vec3</code>                      | <code>[0, 1, 0]</code>     |
+| [projectionMatrix] | <code>module:pex-math~mat4</code>      | <code>mat4.create()</code> |
+| [invViewMatrix]    | <code>module:pex-math~mat4</code>      | <code>mat4.create()</code> |
+| [viewMatrix]       | <code>module:pex-math~mat4</code>      | <code>mat4.create()</code> |
+| [position]         | <code>module:pex-math~vec3</code>      | <code>[0, 0, 3]</code>     |
+| [target]           | <code>module:pex-math~vec3</code>      | <code>[0, 0, 0]</code>     |
+| [up]               | <code>module:pex-math~vec3</code>      | <code>[0, 1, 0]</code>     |
 | [aspect]           | <code>number</code>                    | <code>1</code>             |
 | [near]             | <code>number</code>                    | <code>0.1</code>           |
 | [far]              | <code>number</code>                    | <code>100</code>           |
