@@ -32,21 +32,20 @@ const orthographicCamera = createOrthographicCamera({
 const perspectiveOrbiter = createOrbiter({
   camera: perspectiveCamera,
   element: canvas,
-  easing: 0.1,
 });
 const orthographicOrbiter = createOrbiter({
   camera: orthographicCamera,
   element: canvas,
-  easing: 0.1,
 });
 
 const clearCmd = {
   pass: ctx.pass({
-    clearColor: [0, 0, 0, 1],
+    clearColor: [0.1, 0.1, 0.1, 1],
     clearDepth: 1,
   }),
 };
 
+random.seed("0");
 const offsets = Array.from({ length: 200 }, () => random.vec3());
 
 const drawCubeCmd = {
@@ -176,22 +175,42 @@ const onResize = () => {
 window.addEventListener("resize", onResize);
 onResize();
 
+// GUI
+const addOrbiterGui = (orbiter) => {
+  gui.addParam("easing", orbiter, "easing", { min: 0, max: 1 });
+  gui.addParam("zoom", orbiter, "zoom");
+  gui.addParam("pan", orbiter, "pan");
+  gui.addParam("drag", orbiter, "drag");
+  gui.addParam("minDistance", orbiter, "minDistance", { min: 0, max: 10 });
+  gui.addParam("maxDistance", orbiter, "maxDistance", { min: 10, max: 100 });
+  gui.addParam("minLat", orbiter, "minLat", { min: -89.5, max: 10 });
+  gui.addParam("maxLat", orbiter, "maxLat", { min: 10, max: 89.5 });
+  gui.addParam("minLon", orbiter, "minLon", { min: -1000, max: 0 });
+  gui.addParam("maxLon", orbiter, "maxLon", { min: 0, max: 1000 });
+  gui.addParam("panSlowdown", orbiter, "panSlowdown", { min: 0, max: 10 });
+  gui.addParam("zoomSlowdown", orbiter, "zoomSlowdown", { min: 0, max: 1000 });
+  gui.addParam("dragSlowdown", orbiter, "dragSlowdown", { min: 0, max: 10 });
+  gui.addParam("autoUpdate", orbiter, "autoUpdate", null, (v) =>
+    orbiter.set({ autoUpdate: v })
+  );
+};
+
+gui.addColumn("Perspective");
+addOrbiterGui(perspectiveOrbiter);
+gui.addSeparator();
+gui.addParam("fov", State, "fov", { min: Math.PI / 8, max: Math.PI / 2 }, () =>
+  perspectiveCamera.set({ fov: State.fov })
+);
+gui.addColumn("Orthographic");
+addOrbiterGui(orthographicOrbiter);
+
 gui.addColumn("Shared");
 gui.addParam("Distance", State, "distance", { min: 2, max: 20 }, () => {
   perspectiveOrbiter.set({ distance: State.distance });
   orthographicOrbiter.set({ distance: State.distance });
 });
-gui.addColumn("Perspective");
-gui.addParam(
-  "fov",
-  State,
-  "fov",
-  { min: Math.PI / 8, max: Math.PI / 2 },
-  () => {
-    perspectiveCamera.set({ fov: State.fov });
-  }
-);
 
+// Frame
 ctx.frame(() => {
   ctx.submit(clearCmd);
   ctx.submit(drawCubeCmd, {
