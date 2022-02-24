@@ -1,7 +1,6 @@
 import { vec2, vec3, utils } from "pex-math";
 import pexGeom from "pex-geom";
 
-import raf from "raf";
 import interpolateAngle from "interpolate-angle";
 import latLonToXyz from "latlon-to-xyz";
 import xyzToLatLon from "xyz-to-latlon";
@@ -103,6 +102,18 @@ class OrbiterControls {
       this.currentLon = this.lon;
       this.distance = distance;
       this.currentDistance = this.distance;
+    }
+
+    if (opts.hasOwnProperty("autoUpdate")) {
+      if (this.autoUpdate) {
+        const self = this;
+        this.rafHandle = requestAnimationFrame(function tick() {
+          self.updateCamera();
+          if (self.autoUpdate) self.rafHandle = requestAnimationFrame(tick);
+        });
+      } else if (this.rafHandle) {
+        cancelAnimationFrame(this.rafHandle);
+      }
     }
   }
 
@@ -326,14 +337,6 @@ class OrbiterControls {
       this.handleZoom(event.deltaY);
     };
 
-    if (this.autoUpdate) {
-      const self = this;
-      this._rafHandle = raf(function tick() {
-        self.updateCamera();
-        self._rafHandle = raf(tick);
-      });
-    }
-
     this.element.addEventListener("mousedown", this.onPointerDown);
     this.element.addEventListener("wheel", this.onWheel);
 
@@ -351,6 +354,8 @@ class OrbiterControls {
    * Remove all event listeners
    */
   dispose() {
+    if (this.rafHandle) cancelAnimationFrame(this.rafHandle);
+
     this.element.removeEventListener("mousedown", this.onPointerDown);
     this.element.removeEventListener("wheel", this.onWheel);
 
