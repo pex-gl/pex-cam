@@ -10,7 +10,7 @@
 [![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://github.com/eslint/eslint)
 [![license](https://img.shields.io/github/license/pex-gl/pex-cam)](https://github.com/pex-gl/pex-cam/blob/main/LICENSE.md)
 
-Cameras models and controllers for 3D rendering.
+Cameras models and controllers for 3D rendering in [PEX](https://pex.gl).
 
 ![](https://raw.githubusercontent.com/pex-gl/pex-cam/main/screenshot.png)
 
