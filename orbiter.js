@@ -104,7 +104,7 @@ class OrbiterControls {
       this.currentDistance = this.distance;
     }
 
-    if (opts.hasOwnProperty("autoUpdate")) {
+    if (Object.getOwnPropertyDescriptor(opts, "autoUpdate")) {
       if (this.autoUpdate) {
         const self = this;
         this.rafHandle = requestAnimationFrame(function tick() {
