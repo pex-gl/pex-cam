@@ -3,16 +3,9 @@
  * @module index
  */
 
-import Camera from "./camera.js";
 import PerspectiveCamera from "./perspective.js";
 import OrthographicCamera from "./orthographic.js";
 import OrbiterControls from "./orbiter.js";
-
-/**
- * Re-export camera and controls
- * @returns {Object}
- */
-export { Camera, PerspectiveCamera, OrthographicCamera, OrbiterControls };
 
 /**
  * Factory function for perspective camera
