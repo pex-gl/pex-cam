@@ -25,6 +25,11 @@
   "exports": "./index.js",
   "main": "index.js",
   "types": "types/index.d.ts",
+  "scripts": {
+    "build": "snowdev build",
+    "dev": "snowdev dev",
+    "release": "snowdev release"
+  },
   "dependencies": {
     "interpolate-angle": "^1.0.2",
     "latlon-to-xyz": "^1.0.1",
