@@ -1,12 +1,11 @@
 import { vec2, vec3, utils } from "pex-math";
-import pexGeom from "pex-geom";
+import { ray } from "pex-geom";
 
 import interpolateAngle from "interpolate-angle";
 import latLonToXyz from "latlon-to-xyz";
 import xyzToLatLon from "xyz-to-latlon";
 import eventOffset from "mouse-event-offset";
 
-const { ray } = pexGeom;
 const { clamp, lerp, toRadians, toDegrees } = utils;
 
 /**
