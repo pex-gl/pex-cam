@@ -7,13 +7,13 @@ import {
 import createContext from "pex-context";
 import createCube from "primitive-cube";
 import { mat4 } from "pex-math";
-import random from "pex-random";
+import * as random from "pex-random";
 import createGUI from "pex-gui";
 
 const canvas = document.createElement("canvas");
 document.querySelector("main").appendChild(canvas);
 
-const ctx = createContext({ canvas: canvas });
+const ctx = createContext({ canvas });
 const gui = createGUI(ctx);
 const cube = createCube(0.2);
 
@@ -188,7 +188,7 @@ const addOrbiterGui = (orbiter) => {
   gui.addParam("panSlowdown", orbiter, "panSlowdown", { min: 0, max: 10 });
   gui.addParam("zoomSlowdown", orbiter, "zoomSlowdown", { min: 0, max: 1000 });
   gui.addParam("dragSlowdown", orbiter, "dragSlowdown", { min: 0, max: 10 });
-  gui.addParam("autoUpdate", orbiter, "autoUpdate", null, (v) =>
+  gui.addParam("autoUpdate", orbiter, "autoUpdate", {}, (v) =>
     orbiter.set({ autoUpdate: v })
   );
 };

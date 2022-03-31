@@ -42,9 +42,9 @@
     "assert": "^2.0.0",
     "core-js": "^3.21.1",
     "es-module-shims": "^1.4.7",
-    "pex-context": "^2.10.4",
-    "pex-gui": "^2.4.0",
-    "pex-random": "^1.0.1",
+    "pex-context": "^2.11.0-2",
+    "pex-gui": "github:pex-gl/pex-gui#v3",
+    "pex-random": "github:pex-gl/pex-random#v2",
     "primitive-cube": "^2.0.1"
   },
   "engines": {
