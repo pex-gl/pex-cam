@@ -339,7 +339,9 @@ class OrbiterControls {
     this.element.addEventListener("mousedown", this.onPointerDown);
     this.element.addEventListener("wheel", this.onWheel, { passive: false });
 
-    this.element.addEventListener("touchstart", this.onTouchStart);
+    this.element.addEventListener("touchstart", this.onTouchStart, {
+      passive: false,
+    });
     this.element.addEventListener("touchmove", this.onTouchMove, {
       passive: false,
     });
