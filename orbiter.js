@@ -336,19 +336,13 @@ class OrbiterControls {
       this.handleZoom(event.deltaY);
     };
 
-    this.element.addEventListener("mousedown", this.onPointerDown);
+    this.element.addEventListener("pointerdown", this.onPointerDown);
     this.element.addEventListener("wheel", this.onWheel, { passive: false });
 
-    this.element.addEventListener("touchstart", this.onTouchStart, {
-      passive: false,
-    });
-    this.element.addEventListener("touchmove", this.onTouchMove, {
-      passive: false,
-    });
-    this.element.addEventListener("touchend", this.onPointerUp);
+    document.addEventListener("pointermove", this.onPointerMove);
+    document.addEventListener("pointerup", this.onPointerUp);
 
-    document.addEventListener("mousemove", this.onPointerMove);
-    document.addEventListener("mouseup", this.onPointerUp);
+    this.domElement.style.touchAction = "none";
   }
 
   /**
@@ -357,15 +351,11 @@ class OrbiterControls {
   dispose() {
     if (this.rafHandle) cancelAnimationFrame(this.rafHandle);
 
-    this.element.removeEventListener("mousedown", this.onPointerDown);
+    this.element.removeEventListener("pointerdown", this.onPointerDown);
     this.element.removeEventListener("wheel", this.onWheel);
 
-    this.element.removeEventListener("touchstart", this.onTouchStart);
-    this.element.removeEventListener("touchmove", this.onPointerMove);
-    this.element.removeEventListener("touchend", this.onPointerUp);
-
-    document.removeEventListener("mousemove", this.onPointerMove);
-    document.removeEventListener("mouseup", this.onPointerUp);
+    document.removeEventListener("pointermove", this.onPointerMove);
+    document.removeEventListener("pointerup", this.onPointerUp);
   }
 }
 
