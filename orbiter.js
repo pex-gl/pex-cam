@@ -6,8 +6,6 @@ import latLonToXyz from "latlon-to-xyz";
 import xyzToLatLon from "xyz-to-latlon";
 import eventOffset from "mouse-event-offset";
 
-const { clamp, lerp, toRadians, toDegrees } = utils;
-
 /**
  * Camera controls to orbit around a target
  */
@@ -123,23 +121,23 @@ class OrbiterControls {
     const position = this.camera.position;
     const target = this.camera.target;
 
-    this.lat = clamp(this.lat, this.minLat, this.maxLat);
+    this.lat = utils.clamp(this.lat, this.minLat, this.maxLat);
 
     if (this.minLon !== -Infinity && this.maxLon !== Infinity) {
-      this.lon = clamp(this.lon, this.minLon, this.maxLon) % 360;
+      this.lon = utils.clamp(this.lon, this.minLon, this.maxLon) % 360;
     }
 
-    this.currentLat = toDegrees(
+    this.currentLat = utils.toDegrees(
       interpolateAngle(
-        (toRadians(this.currentLat) + 2 * Math.PI) % (2 * Math.PI),
-        (toRadians(this.lat) + 2 * Math.PI) % (2 * Math.PI),
+        (utils.toRadians(this.currentLat) + 2 * Math.PI) % (2 * Math.PI),
+        (utils.toRadians(this.lat) + 2 * Math.PI) % (2 * Math.PI),
         this.easing
       )
     );
 
     this.currentLon += (this.lon - this.currentLon) * this.easing;
 
-    this.currentDistance = lerp(
+    this.currentDistance = utils.lerp(
       this.currentDistance,
       this.distance,
       this.easing
@@ -267,7 +265,11 @@ class OrbiterControls {
 
   handleZoom(dy) {
     this.distance *= 1 + dy / this.zoomSlowdown;
-    this.distance = clamp(this.distance, this.minDistance, this.maxDistance);
+    this.distance = utils.clamp(
+      this.distance,
+      this.minDistance,
+      this.maxDistance
+    );
   }
 
   handleEnd() {
