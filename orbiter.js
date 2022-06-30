@@ -200,8 +200,7 @@ class OrbiterControls {
           this.width,
           this.height
         ),
-        this.panPlane[0],
-        this.panPlane[1],
+        this.panPlane,
         this.clickPosPlane
       );
     }
@@ -238,8 +237,7 @@ class OrbiterControls {
           this.width,
           this.height
         ),
-        this.panPlane[0],
-        this.panPlane[1],
+        this.panPlane,
         this.dragPosPlane
       );
 

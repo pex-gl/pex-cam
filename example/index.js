@@ -5,7 +5,7 @@ import {
 } from "../index.js";
 
 import createContext from "pex-context";
-import createCube from "primitive-cube";
+import { cube as createCube } from "primitive-geometry";
 import { mat4 } from "pex-math";
 import * as random from "pex-random";
 import createGUI from "pex-gui";
@@ -15,7 +15,7 @@ document.querySelector("main").appendChild(canvas);
 
 const ctx = createContext({ canvas });
 const gui = createGUI(ctx);
-const cube = createCube(0.2);
+const cube = createCube({ sx: 0.2 });
 
 const State = { distance: 5, fov: Math.PI / 3 };
 
