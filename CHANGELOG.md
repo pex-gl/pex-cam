@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+# [3.0.0-alpha.1](https://github.com/pex-gl/pex-cam/compare/v3.0.0-alpha.0...v3.0.0-alpha.1) (2022-07-04)
+
+
+### Bug Fixes
+
+* export types ([8e8808e](https://github.com/pex-gl/pex-cam/commit/8e8808e8ae5db32c5db43dfcbab5119f4cb37df0))
+
+
+
 # [3.0.0-alpha.0](https://github.com/pex-gl/pex-cam/compare/v2.7.1...v3.0.0-alpha.0) (2022-07-04)
 
 

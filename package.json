@@ -1,6 +1,6 @@
 {
   "name": "pex-cam",
-  "version": "3.0.0-alpha.0",
+  "version": "3.0.0-alpha.1",
   "description": "Cameras models and controllers for 3D rendering in PEX.",
   "keywords": [
     "pex",

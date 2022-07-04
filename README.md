@@ -245,8 +245,8 @@ A class to create a perspective camera
 - [PerspectiveCamera](#PerspectiveCamera) ⇐ [<code>Camera</code>](#Camera)
   - [new PerspectiveCamera(opts)](#new_PerspectiveCamera_new)
   - [.set(opts)](#PerspectiveCamera+set)
-  - [.getViewRay(x, y, windowWidth, windowHeight)](#PerspectiveCamera+getViewRay) ⇒ <code>ray</code>
-  - [.getWorldRay(x, y, windowWidth, windowHeight)](#PerspectiveCamera+getWorldRay) ⇒ <code>ray</code>
+  - [.getViewRay(x, y, windowWidth, windowHeight)](#PerspectiveCamera+getViewRay) ⇒ <code>module:pex-geom~ray</code>
+  - [.getWorldRay(x, y, windowWidth, windowHeight)](#PerspectiveCamera+getWorldRay) ⇒ <code>module:pex-geom~ray</code>
 
 <a name="new_PerspectiveCamera_new"></a>
 
@@ -273,7 +273,7 @@ Update the camera
 
 <a name="PerspectiveCamera+getViewRay"></a>
 
-### perspectiveCamera.getViewRay(x, y, windowWidth, windowHeight) ⇒ <code>ray</code>
+### perspectiveCamera.getViewRay(x, y, windowWidth, windowHeight) ⇒ <code>module:pex-geom~ray</code>
 
 Create a picking ray in view (camera) coordinates
 
@@ -288,7 +288,7 @@ Create a picking ray in view (camera) coordinates
 
 <a name="PerspectiveCamera+getWorldRay"></a>
 
-### perspectiveCamera.getWorldRay(x, y, windowWidth, windowHeight) ⇒ <code>ray</code>
+### perspectiveCamera.getWorldRay(x, y, windowWidth, windowHeight) ⇒ <code>module:pex-geom~ray</code>
 
 Create a picking ray in world coordinates
 
@@ -385,8 +385,8 @@ Create a picking ray in world coordinates
 | [zoom]         | <code>boolean</code>             | <code>true</code>      |
 | [pan]          | <code>boolean</code>             | <code>true</code>      |
 | [drag]         | <code>boolean</code>             | <code>true</code>      |
-| [minDistance]  | <code>number</code>              | <code>0.1</code>       |
-| [maxDistance]  | <code>number</code>              | <code>10</code>        |
+| [minDistance]  | <code>number</code>              | <code>0.01</code>      |
+| [maxDistance]  | <code>number</code>              | <code>Infinity</code>  |
 | [minLat]       | [<code>Degrees</code>](#Degrees) | <code>-89.5</code>     |
 | [maxLat]       | [<code>Degrees</code>](#Degrees) | <code>89.5</code>      |
 | [minLon]       | <code>number</code>              | <code>-Infinity</code> |
