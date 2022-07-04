@@ -73,7 +73,7 @@ class PerspectiveCamera extends Camera {
    * @param {number} y mouse y
    * @param {number} windowWidth
    * @param {number} windowHeight
-   * @returns {ray}
+   * @returns {import("pex-geom").ray}
    */
   getViewRay(x, y, windowWidth, windowHeight) {
     if (this.view) {
@@ -101,7 +101,7 @@ class PerspectiveCamera extends Camera {
    * @param {number} y
    * @param {number} windowWidth
    * @param {number} windowHeight
-   * @returns {ray}
+   * @returns {import("pex-geom").ray}
    */
   getWorldRay(x, y, windowWidth, windowHeight) {
     let ray = this.getViewRay(x, y, windowWidth, windowHeight);
