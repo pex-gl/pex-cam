@@ -19,8 +19,8 @@ class OrbiterControls {
       pan: true,
       drag: true,
 
-      minDistance: 0.1,
-      maxDistance: 10,
+      minDistance: 0.01,
+      maxDistance: Infinity,
       minLat: -89.5,
       maxLat: 89.5,
       minLon: -Infinity,
