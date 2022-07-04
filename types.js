@@ -59,3 +59,5 @@
  * @property {number} [dragSlowdown=4]
  * @property {boolean} [autoUpdate=true]
  */
+
+export {};
