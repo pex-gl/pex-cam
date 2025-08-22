@@ -6,14 +6,14 @@
  */
 
 /**
- * @typedef {Object} CameraView
+ * @typedef {object} CameraView
  * @property {import("pex-math").vec2} offset
  * @property {import("pex-math").vec2} size
  * @property {import("pex-math").vec2} totalSize
  */
 
 /**
- * @typedef {Object} CameraOptions
+ * @typedef {object} CameraOptions
  * @property {import("pex-math").mat4} [projectionMatrix=mat4.create()]
  * @property {import("pex-math").mat4} [invViewMatrix=mat4.create()]
  * @property {import("pex-math").mat4} [viewMatrix=mat4.create()]
@@ -27,12 +27,12 @@
  */
 
 /**
- * @typedef {Object} PerspectiveCameraOptions
+ * @typedef {object} PerspectiveCameraOptions
  * @property {Radians} [fov=Math.PI / 3]
  */
 
 /**
- * @typedef {Object} OrthographicCameraOptions
+ * @typedef {object} OrthographicCameraOptions
  * @property {number} [left=-1]
  * @property {number} [right=1]
  * @property {number} [bottom=-1]
@@ -41,7 +41,7 @@
  */
 
 /**
- * @typedef {Object} OrbiterControlsOptions
+ * @typedef {object} OrbiterControlsOptions
  * @property {import("./camera.js").Camera} camera
  * @property {HTMLElement} [element=document]
  * @property {number} [easing=0.1]

@@ -4,7 +4,7 @@ import Camera from "./camera.js";
 
 /**
  * A class to create a perspective camera
- * @extends Camera
+ * @augments Camera
  */
 class PerspectiveCamera extends Camera {
   static get DEFAULT_OPTIONS() {

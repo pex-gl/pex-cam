@@ -4,7 +4,7 @@ import Camera from "./camera.js";
 
 /**
  * A class to create an orthographic camera
- * @extends Camera
+ * @augments Camera
  */
 class OrthographicCamera extends Camera {
   static get DEFAULT_OPTIONS() {
