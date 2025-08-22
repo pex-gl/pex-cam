@@ -1,6 +1,6 @@
 /**
  * Re-export classes and factory functions
- * @module index
+ * @module pex-cam
  */
 
 import PerspectiveCamera from "./perspective.js";
@@ -27,3 +27,5 @@ export const orthographic = (opts) => new OrthographicCamera(opts);
  * @returns {OrbiterControls}
  */
 export const orbiter = (opts) => new OrbiterControls(opts);
+
+export { PerspectiveCamera, OrthographicCamera, OrbiterControls };
