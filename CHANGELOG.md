@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [3.0.1](https://github.com/pex-gl/pex-cam/compare/v3.0.0...v3.0.1) (2025-08-22)
+
+
+### Bug Fixes
+
+* re-exports classes + rename index module to pex-cam ([b858636](https://github.com/pex-gl/pex-cam/commit/b858636fa19dd8b97f5f55f2cb62b0c6618d0e2e))
+
+
+
 # [3.0.0](https://github.com/pex-gl/pex-cam/compare/v3.0.0-alpha.1...v3.0.0) (2025-08-22)
 
 

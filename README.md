@@ -48,7 +48,7 @@ console.log(perspectiveCamera.projectionMatrix);
 ## Modules
 
 <dl>
-<dt><a href="#module_index">index</a></dt>
+<dt><a href="#module_pex-cam">pex-cam</a></dt>
 <dd><p>Re-export classes and factory functions</p>
 </dd>
 </dl>
@@ -89,48 +89,48 @@ console.log(perspectiveCamera.projectionMatrix);
 <dd></dd>
 </dl>
 
-<a name="module_index"></a>
+<a name="module_pex-cam"></a>
 
-## index
+## pex-cam
 
 Re-export classes and factory functions
 
-- [index](#module_index)
-  - [.perspective](#module_index.perspective) ⇒ [<code>PerspectiveCamera</code>](#PerspectiveCamera)
-  - [.orthographic](#module_index.orthographic) ⇒ [<code>OrthographicCamera</code>](#OrthographicCamera)
-  - [.orbiter](#module_index.orbiter) ⇒ [<code>OrbiterControls</code>](#OrbiterControls)
+- [pex-cam](#module_pex-cam)
+  - [.perspective](#module_pex-cam.perspective) ⇒ [<code>PerspectiveCamera</code>](#PerspectiveCamera)
+  - [.orthographic](#module_pex-cam.orthographic) ⇒ [<code>OrthographicCamera</code>](#OrthographicCamera)
+  - [.orbiter](#module_pex-cam.orbiter) ⇒ [<code>OrbiterControls</code>](#OrbiterControls)
 
-<a name="module_index.perspective"></a>
+<a name="module_pex-cam.perspective"></a>
 
-### index.perspective ⇒ [<code>PerspectiveCamera</code>](#PerspectiveCamera)
+### pex-cam.perspective ⇒ [<code>PerspectiveCamera</code>](#PerspectiveCamera)
 
 Factory function for perspective camera
 
-**Kind**: static constant of [<code>index</code>](#module_index)
+**Kind**: static constant of [<code>pex-cam</code>](#module_pex-cam)
 
 | Param | Type                                                                                                               |
 | ----- | ------------------------------------------------------------------------------------------------------------------ |
 | opts  | [<code>CameraOptions</code>](#CameraOptions) \| [<code>PerspectiveCameraOptions</code>](#PerspectiveCameraOptions) |
 
-<a name="module_index.orthographic"></a>
+<a name="module_pex-cam.orthographic"></a>
 
-### index.orthographic ⇒ [<code>OrthographicCamera</code>](#OrthographicCamera)
+### pex-cam.orthographic ⇒ [<code>OrthographicCamera</code>](#OrthographicCamera)
 
 Factory function for orthographic camera
 
-**Kind**: static constant of [<code>index</code>](#module_index)
+**Kind**: static constant of [<code>pex-cam</code>](#module_pex-cam)
 
 | Param | Type                                                                                                                 |
 | ----- | -------------------------------------------------------------------------------------------------------------------- |
 | opts  | [<code>CameraOptions</code>](#CameraOptions) \| [<code>OrthographicCameraOptions</code>](#OrthographicCameraOptions) |
 
-<a name="module_index.orbiter"></a>
+<a name="module_pex-cam.orbiter"></a>
 
-### index.orbiter ⇒ [<code>OrbiterControls</code>](#OrbiterControls)
+### pex-cam.orbiter ⇒ [<code>OrbiterControls</code>](#OrbiterControls)
 
 Factory function for orbiter controls
 
-**Kind**: static constant of [<code>index</code>](#module_index)
+**Kind**: static constant of [<code>pex-cam</code>](#module_pex-cam)
 
 | Param | Type                                                           |
 | ----- | -------------------------------------------------------------- |
