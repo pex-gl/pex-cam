@@ -1,124 +1,122 @@
-const vec3 = require('pex-math/vec3')
-const mat4 = require('pex-math/mat4')
+import { vec3, mat4 } from "pex-math";
 
-function setFrustumOffset (camera, x, y, width, height, widthTotal, heightTotal) {
-  // console.log('frustum', x, y, width, height, widthTotal, heightTotal)
-  widthTotal = widthTotal === undefined ? width : widthTotal
-  heightTotal = heightTotal === undefined ? height : heightTotal
+import Camera from "./camera.js";
 
-  var near = camera.near
-  var far = camera.far
-  var fov = camera.fov
-
-  var aspectRatio = widthTotal / heightTotal
-
-  var top = Math.tan(fov * 0.5) * near
-  var bottom = -top
-  var left = aspectRatio * bottom
-  var right = aspectRatio * top
-  var width_ = Math.abs(right - left)
-  var height_ = Math.abs(top - bottom)
-  var widthNormalized = width_ / widthTotal
-  var heightNormalized = height_ / heightTotal
-
-  var l = left + x * widthNormalized
-  var r = left + (x + width) * widthNormalized
-  var b = top - (y + height) * heightNormalized
-  var t = top - y * heightNormalized
-
-  camera.aspect = aspectRatio
-  mat4.frustum(camera.projectionMatrix, l, r, b, t, near, far)
-}
-
-function PerspectiveCamera (opts) {
-  this.set({
-    projectionMatrix: mat4.create(),
-    invViewMatrix: mat4.create(),
-    viewMatrix: mat4.create(),
-    position: [0, 0, 3],
-    target: [0, 0, 0],
-    up: [0, 1, 0],
-    fov: Math.PI / 3,
-    aspect: 1,
-    near: 0.1,
-    far: 100
-  })
-
-  this.set(opts)
-}
-
-PerspectiveCamera.prototype.set = function (opts) {
-  Object.assign(this, opts)
-
-  if (opts.position || opts.target || opts.up) {
-    mat4.lookAt(
-      this.viewMatrix,
-      this.position,
-      this.target,
-      this.up
-    )
-    mat4.set(this.invViewMatrix, this.viewMatrix)
-    mat4.invert(this.invViewMatrix)
+/**
+ * A class to create a perspective camera
+ * @augments Camera
+ */
+class PerspectiveCamera extends Camera {
+  static get DEFAULT_OPTIONS() {
+    return {
+      fov: Math.PI / 3,
+    };
   }
 
-  if (opts.fov || opts.aspect || opts.near || opts.far) {
-    mat4.perspective(
-      this.projectionMatrix,
-      this.fov,
-      this.aspect,
-      this.near,
-      this.far
-    )
+  /**
+   * Create an instance of PerspectiveCamera
+   * @param {import("./types.js").CameraOptions & import("./types.js").PerspectiveCameraOptions} opts
+   */
+  constructor(opts = {}) {
+    super();
+
+    this.set({
+      ...Camera.DEFAULT_OPTIONS,
+      ...PerspectiveCamera.DEFAULT_OPTIONS,
+      ...opts,
+    });
   }
 
-  if (this.frustum) {
-    setFrustumOffset(
-      this,
-      this.frustum.offset[0], this.frustum.offset[1],
-      this.frustum.size[0], this.frustum.size[1],
-      this.frustum.totalSize[0], this.frustum.totalSize[1]
-    )
+  /**
+   * Update the camera
+   * @param {import("./types.js").CameraOptions & import("./types.js").PerspectiveCameraOptions} opts
+   */
+  set(opts) {
+    super.set(opts);
+
+    if (opts.fov || opts.aspect || opts.near || opts.far || opts.view) {
+      if (this.view) {
+        const aspectRatio = this.view.totalSize[0] / this.view.totalSize[1];
+
+        const top = Math.tan(this.fov * 0.5) * this.near;
+        const bottom = -top;
+        const left = aspectRatio * bottom;
+        const right = aspectRatio * top;
+        const width = Math.abs(right - left);
+        const height = Math.abs(top - bottom);
+        const widthNormalized = width / this.view.totalSize[0];
+        const heightNormalized = height / this.view.totalSize[1];
+
+        const l = left + this.view.offset[0] * widthNormalized;
+        const r =
+          left + (this.view.offset[0] + this.view.size[0]) * widthNormalized;
+        const b =
+          top - (this.view.offset[1] + this.view.size[1]) * heightNormalized;
+        const t = top - this.view.offset[1] * heightNormalized;
+
+        mat4.frustum(this.projectionMatrix, l, r, b, t, this.near, this.far);
+      } else {
+        mat4.perspective(
+          this.projectionMatrix,
+          this.fov,
+          this.aspect,
+          this.near,
+          this.far
+        );
+      }
+    }
+  }
+
+  /**
+   * Create a picking ray in view (camera) coordinates
+   * @param {number} x mouse x
+   * @param {number} y mouse y
+   * @param {number} windowWidth
+   * @param {number} windowHeight
+   * @returns {import("pex-geom").ray}
+   */
+  getViewRay(x, y, windowWidth, windowHeight) {
+    if (this.view) {
+      x += this.view.offset[0];
+      y += this.view.offset[1];
+      windowWidth = this.view.totalSize[0];
+      windowHeight = this.view.totalSize[1];
+    }
+    let nx = (2 * x) / windowWidth - 1;
+    let ny = 1 - (2 * y) / windowHeight;
+
+    const hNear = 2 * Math.tan(this.fov / 2) * this.near;
+    const wNear = hNear * this.aspect;
+
+    nx *= wNear * 0.5;
+    ny *= hNear * 0.5;
+
+    // [origin, direction]
+    return [[0, 0, 0], vec3.normalize([nx, ny, -this.near])];
+  }
+
+  /**
+   * Create a picking ray in world coordinates
+   * @param {number} x
+   * @param {number} y
+   * @param {number} windowWidth
+   * @param {number} windowHeight
+   * @returns {import("pex-geom").ray}
+   */
+  getWorldRay(x, y, windowWidth, windowHeight) {
+    let ray = this.getViewRay(x, y, windowWidth, windowHeight);
+    const origin = ray[0];
+    const direction = ray[1];
+
+    vec3.multMat4(origin, this.invViewMatrix);
+    // this is correct as origin is [0, 0, 0] so direction is also a point
+    vec3.multMat4(direction, this.invViewMatrix);
+
+    // TODO: is this necessary?
+    vec3.normalize(vec3.sub(direction, origin));
+
+    return ray;
   }
 }
 
-PerspectiveCamera.prototype.getViewRay = function (x, y, windowWidth, windowHeight) {
-  if (this.frustum) {
-    x += this.frustum.offset[0]
-    y += this.frustum.offset[1]
-    windowWidth = this.frustum.totalSize[0]
-    windowHeight = this.frustum.totalSize[1]
-  }
-  let nx = 2 * x / windowWidth - 1
-  let ny = 1 - 2 * y / windowHeight
-
-  let hNear = 2 * Math.tan(this.fov / 2) * this.near
-  let wNear = hNear * this.aspect
-
-  nx *= (wNear * 0.5)
-  ny *= (hNear * 0.5)
-
-  let origin = [0, 0, 0]
-  let direction = vec3.normalize([nx, ny, -this.near])
-  let ray = [origin, direction]
-
-  return ray
-}
-
-PerspectiveCamera.prototype.getWorldRay = function (x, y, windowWidth, windowHeight) {
-  let ray = this.getViewRay(x, y, windowWidth, windowHeight)
-  let origin = ray[0]
-  let direction = ray[1]
-
-  vec3.multMat4(origin, this.invViewMatrix)
-  // this is correct as origin is [0, 0, 0] so direction is also a point
-  vec3.multMat4(direction, this.invViewMatrix)
-
-  // is this necessary?
-  vec3.normalize(vec3.sub(direction, origin))
-
-  return ray
-}
-
-module.exports = function createPerspectiveCamera (opts) {
-  return new PerspectiveCamera(opts)
-}
+export default PerspectiveCamera;

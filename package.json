@@ -1,43 +1,61 @@
 {
   "name": "pex-cam",
-  "version": "2.8.0",
-  "description": "Camera models and modifiers.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/pex-gl/pex-cam.git"
-  },
+  "version": "3.0.0-alpha.1",
+  "description": "Cameras models and controllers for 3D rendering in PEX.",
   "keywords": [
     "pex",
-    "webgl"
+    "cam",
+    "webgl",
+    "3d",
+    "cameras",
+    "perspective",
+    "orthographic",
+    "orbiter"
   ],
-  "author": {
-    "name": "Henryk Wollik",
-    "email": "hwollik@hotmail.com",
-    "url": "http://henrykwollik.com"
-  },
-  "contributors": [
-    {
-      "name": "Marcin Ignac",
-      "email": "marcin.ignac@gmail.com",
-      "url": "http://marcinignac.com"
-    }
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/pex-gl/pex-cam/issues"
-  },
   "homepage": "https://github.com/pex-gl/pex-cam",
+  "bugs": "https://github.com/pex-gl/pex-cam/issues",
+  "repository": "pex-gl/pex-cam",
+  "license": "MIT",
+  "author": "Henryk Wollik <hwollik@hotmail.com> (http://henrykwollik.com)",
+  "contributors": [
+    "Marcin Ignac <marcin.ignac@gmail.com> (http://marcinignac.com)",
+    "Damien Seguin (https://github.com/dmnsgn)"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "main": "index.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "build": "snowdev build",
+    "dev": "snowdev dev",
+    "release": "snowdev release"
+  },
   "dependencies": {
     "interpolate-angle": "^1.0.2",
     "latlon-to-xyz": "^1.0.1",
     "mouse-event-offset": "^3.0.2",
-    "pex-geom": "^2.0.1",
-    "pex-math": "^2.0.0",
-    "raf": "^3.4.0",
+    "pex-geom": "^3.1.0",
+    "pex-math": "^4.1.2",
     "xyz-to-latlon": "^1.0.2"
+  },
+  "devDependencies": {
+    "es-module-shims": "^2.6.2",
+    "pex-context": "^3.3.0",
+    "pex-gui": "^3.2.0",
+    "pex-random": "^2.1.2",
+    "primitive-geometry": "^2.11.0"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.5.1",
+    "snowdev": ">=2.5.x"
+  },
+  "snowdev": {
+    "dependencies": "all"
   }
 }
