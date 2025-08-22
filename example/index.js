@@ -13,7 +13,8 @@ import createGUI from "pex-gui";
 const canvas = document.createElement("canvas");
 document.querySelector("main").appendChild(canvas);
 
-const ctx = createContext({ canvas });
+const pixelRatio = devicePixelRatio;
+const ctx = createContext({ canvas, pixelRatio });
 const gui = createGUI(ctx);
 const cube = createCube({ sx: 0.2 });
 
@@ -136,10 +137,11 @@ const drawCubeCmd = {
 };
 
 const onResize = () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  ctx.set({ pixelRatio, width, height });
 
-  const aspect = canvas.width / canvas.height;
+  const aspect = width / height;
 
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
@@ -189,7 +191,7 @@ const addOrbiterGui = (orbiter) => {
   gui.addParam("zoomSlowdown", orbiter, "zoomSlowdown", { min: 0, max: 1000 });
   gui.addParam("dragSlowdown", orbiter, "dragSlowdown", { min: 0, max: 10 });
   gui.addParam("autoUpdate", orbiter, "autoUpdate", {}, (v) =>
-    orbiter.set({ autoUpdate: v })
+    orbiter.set({ autoUpdate: v }),
   );
 };
 
@@ -197,7 +199,7 @@ gui.addColumn("Perspective");
 addOrbiterGui(perspectiveOrbiter);
 gui.addSeparator();
 gui.addParam("fov", State, "fov", { min: Math.PI / 8, max: Math.PI / 2 }, () =>
-  perspectiveCamera.set({ fov: State.fov })
+  perspectiveCamera.set({ fov: State.fov }),
 );
 gui.addColumn("Orthographic");
 addOrbiterGui(orthographicOrbiter);

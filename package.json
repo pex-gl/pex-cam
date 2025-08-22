@@ -46,7 +46,7 @@
   "devDependencies": {
     "es-module-shims": "^2.6.2",
     "pex-context": "^3.3.0",
-    "pex-gui": "github:pex-gl/pex-gui#v3",
+    "pex-gui": "^3.2.0",
     "pex-random": "^2.1.2",
     "primitive-geometry": "^2.11.0"
   },
