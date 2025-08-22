@@ -1,6 +1,15 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
+
+# [3.0.0](https://github.com/pex-gl/pex-cam/compare/v3.0.0-alpha.1...v3.0.0) (2025-08-22)
+
+
+### Bug Fixes
+
+* check for undefined zoom in orbiter updateCamera ([d626939](https://github.com/pex-gl/pex-cam/commit/d626939782d93599058bb0927bb95a5b05660cb7))
+
+
 
 # [3.0.0-alpha.1](https://github.com/pex-gl/pex-cam/compare/v3.0.0-alpha.0...v3.0.0-alpha.1) (2022-07-04)
 

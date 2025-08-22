@@ -77,15 +77,15 @@ console.log(perspectiveCamera.projectionMatrix);
 <dd></dd>
 <dt><a href="#Degrees">Degrees</a> : <code>number</code></dt>
 <dd></dd>
-<dt><a href="#CameraView">CameraView</a> : <code>Object</code></dt>
+<dt><a href="#CameraView">CameraView</a> : <code>object</code></dt>
 <dd></dd>
-<dt><a href="#CameraOptions">CameraOptions</a> : <code>Object</code></dt>
+<dt><a href="#CameraOptions">CameraOptions</a> : <code>object</code></dt>
 <dd></dd>
-<dt><a href="#PerspectiveCameraOptions">PerspectiveCameraOptions</a> : <code>Object</code></dt>
+<dt><a href="#PerspectiveCameraOptions">PerspectiveCameraOptions</a> : <code>object</code></dt>
 <dd></dd>
-<dt><a href="#OrthographicCameraOptions">OrthographicCameraOptions</a> : <code>Object</code></dt>
+<dt><a href="#OrthographicCameraOptions">OrthographicCameraOptions</a> : <code>object</code></dt>
 <dd></dd>
-<dt><a href="#OrbiterControlsOptions">OrbiterControlsOptions</a> : <code>Object</code></dt>
+<dt><a href="#OrbiterControlsOptions">OrbiterControlsOptions</a> : <code>object</code></dt>
 <dd></dd>
 </dl>
 
@@ -313,7 +313,7 @@ Create a picking ray in world coordinates
 **Kind**: global typedef
 <a name="CameraView"></a>
 
-## CameraView : <code>Object</code>
+## CameraView : <code>object</code>
 
 **Kind**: global typedef
 **Properties**
@@ -326,7 +326,7 @@ Create a picking ray in world coordinates
 
 <a name="CameraOptions"></a>
 
-## CameraOptions : <code>Object</code>
+## CameraOptions : <code>object</code>
 
 **Kind**: global typedef
 **Properties**
@@ -346,7 +346,7 @@ Create a picking ray in world coordinates
 
 <a name="PerspectiveCameraOptions"></a>
 
-## PerspectiveCameraOptions : <code>Object</code>
+## PerspectiveCameraOptions : <code>object</code>
 
 **Kind**: global typedef
 **Properties**
@@ -357,7 +357,7 @@ Create a picking ray in world coordinates
 
 <a name="OrthographicCameraOptions"></a>
 
-## OrthographicCameraOptions : <code>Object</code>
+## OrthographicCameraOptions : <code>object</code>
 
 **Kind**: global typedef
 **Properties**
@@ -372,7 +372,7 @@ Create a picking ray in world coordinates
 
 <a name="OrbiterControlsOptions"></a>
 
-## OrbiterControlsOptions : <code>Object</code>
+## OrbiterControlsOptions : <code>object</code>
 
 **Kind**: global typedef
 **Properties**

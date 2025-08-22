@@ -79,7 +79,7 @@ class OrthographicCamera extends Camera {
         bottom,
         top,
         this.near,
-        this.far
+        this.far,
       );
     }
   }

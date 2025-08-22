@@ -1,6 +1,6 @@
 {
   "name": "pex-cam",
-  "version": "3.0.0-alpha.1",
+  "version": "3.0.0",
   "description": "Cameras models and controllers for 3D rendering in PEX.",
   "keywords": [
     "pex",
@@ -14,7 +14,10 @@
   ],
   "homepage": "https://github.com/pex-gl/pex-cam",
   "bugs": "https://github.com/pex-gl/pex-cam/issues",
-  "repository": "pex-gl/pex-cam",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pex-gl/pex-cam.git"
+  },
   "license": "MIT",
   "author": "Henryk Wollik <hwollik@hotmail.com> (http://henrykwollik.com)",
   "contributors": [

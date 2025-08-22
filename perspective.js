@@ -61,7 +61,7 @@ class PerspectiveCamera extends Camera {
           this.fov,
           this.aspect,
           this.near,
-          this.far
+          this.far,
         );
       }
     }

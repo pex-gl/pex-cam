@@ -86,8 +86,8 @@ class OrbiterControls {
     if (opts.camera) {
       const latLon = xyzToLatLon(
         vec3.normalize(
-          vec3.sub(vec3.copy(opts.camera.position), opts.camera.target)
-        )
+          vec3.sub(vec3.copy(opts.camera.position), opts.camera.target),
+        ),
       );
       const distance =
         opts.distance ||
@@ -131,8 +131,8 @@ class OrbiterControls {
       interpolateAngle(
         (utils.toRadians(this.currentLat) + 2 * Math.PI) % (2 * Math.PI),
         (utils.toRadians(this.lat) + 2 * Math.PI) % (2 * Math.PI),
-        this.easing
-      )
+        this.easing,
+      ),
     );
 
     this.currentLon += (this.lon - this.currentLon) * this.easing;
@@ -140,7 +140,7 @@ class OrbiterControls {
     this.currentDistance = utils.lerp(
       this.currentDistance,
       this.distance,
-      this.easing
+      this.easing,
     );
 
     // Set position from lat/lon
@@ -191,7 +191,7 @@ class OrbiterControls {
       vec3.set(this.clickTarget, camera.target);
       const targetInViewSpace = vec3.multMat4(
         vec3.copy(this.clickTarget),
-        camera.viewMatrix
+        camera.viewMatrix,
       );
       this.panPlane = [targetInViewSpace, [0, 0, 1]];
 
@@ -200,10 +200,10 @@ class OrbiterControls {
           clickPosWindow[0],
           clickPosWindow[1],
           this.width,
-          this.height
+          this.height,
         ),
         this.panPlane,
-        this.clickPosPlane
+        this.clickPosPlane,
       );
     }
   }
@@ -237,24 +237,24 @@ class OrbiterControls {
           dragPosWindow[0],
           dragPosWindow[1],
           this.width,
-          this.height
+          this.height,
         ),
         this.panPlane,
-        this.dragPosPlane
+        this.dragPosPlane,
       );
 
       vec3.multMat4(
         vec3.set(this.clickPosWorld, this.clickPosPlane),
-        camera.invViewMatrix
+        camera.invViewMatrix,
       );
       vec3.multMat4(
         vec3.set(this.dragPosWorld, this.dragPosPlane),
-        camera.invViewMatrix
+        camera.invViewMatrix,
       );
 
       const diffWorld = vec3.sub(
         vec3.copy(this.dragPosWorld),
-        this.clickPosWorld
+        this.clickPosWorld,
       );
       camera.set({
         distance: this.distance,
@@ -268,7 +268,7 @@ class OrbiterControls {
     this.distance = utils.clamp(
       this.distance,
       this.minDistance,
-      this.maxDistance
+      this.maxDistance,
     );
   }
 
@@ -289,7 +289,7 @@ class OrbiterControls {
 
       const touch0 = eventOffset(
         event.touches ? event.touches[0] : event,
-        this.domElement
+        this.domElement,
       );
       if (this.drag && !pan) {
         this.handleDragStart(touch0);
@@ -303,7 +303,7 @@ class OrbiterControls {
     this.onPointerMove = (event) => {
       const touch0 = eventOffset(
         event.touches ? event.touches[0] : event,
-        this.domElement
+        this.domElement,
       );
       if (this.dragging) {
         this.handleDragMove(touch0);
