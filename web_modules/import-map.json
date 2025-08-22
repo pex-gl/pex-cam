@@ -1,0 +1,18 @@
+{
+  "imports": {
+    "es-module-shims": "./es-module-shims.js",
+    "es-module-shims/debug": "./es-module-shims/debug.js",
+    "es-module-shims/wasm": "./es-module-shims/wasm.js",
+    "es-module-shims/typescript-transform": "./es-module-shims/typescript-transform.js",
+    "interpolate-angle": "./interpolate-angle.js",
+    "latlon-to-xyz": "./latlon-to-xyz.js",
+    "mouse-event-offset": "./mouse-event-offset.js",
+    "pex-context": "./pex-context.js",
+    "pex-geom": "./pex-geom.js",
+    "pex-gui": "./pex-gui.js",
+    "pex-math": "./pex-math.js",
+    "pex-random": "./pex-random.js",
+    "primitive-geometry": "./primitive-geometry.js",
+    "xyz-to-latlon": "./xyz-to-latlon.js"
+  }
+}

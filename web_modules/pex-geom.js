@@ -1,0 +1,415 @@
+import { s as set3, t as toString$3, a as set$1, b as sub, n as normalize, d as dot, c as create$3, e as add, f as scale, g as cross, l as length } from './_chunks/avec3-DDy_FiCV.js';
+export { r as rect } from './_chunks/rect-CG4v56ej.js';
+import './_chunks/vec2-BPX7GYLT.js';
+
+/**
+ * Creates a new bounding box.
+ * @returns {import("./types.js").aabb}
+ */ function create$2() {
+    // [min, max]
+    return [
+        [
+            Infinity,
+            Infinity,
+            Infinity
+        ],
+        [
+            -Infinity,
+            -Infinity,
+            -Infinity
+        ]
+    ];
+}
+/**
+ * Reset a bounding box.
+ * @param {import("./types.js").aabb} a
+ * @returns {import("./types.js").rect}
+ */ function empty(a) {
+    a[0][0] = Infinity;
+    a[0][1] = Infinity;
+    a[0][2] = Infinity;
+    a[1][0] = -Infinity;
+    a[1][1] = -Infinity;
+    a[1][2] = -Infinity;
+    return a;
+}
+/**
+ * Copies a bounding box.
+ * @param {import("./types.js").aabb} a
+ * @returns {import("./types.js").aabb}
+ */ function copy(a) {
+    return [
+        a[0].slice(),
+        a[1].slice()
+    ];
+}
+/**
+ * Sets a bounding box to another.
+ * @param {import("./types.js").aabb} a
+ * @param {import("./types.js").aabb} b
+ * @returns {import("./types.js").aabb}
+ */ function set(a, b) {
+    a[0][0] = b[0][0];
+    a[0][1] = b[0][1];
+    a[0][2] = b[0][2];
+    a[1][0] = b[1][0];
+    a[1][1] = b[1][1];
+    a[1][2] = b[1][2];
+    return a;
+}
+/**
+ * Checks if a bounding box is empty.
+ * @param {import("./types.js").aabb} a
+ * @returns {boolean}
+ */ function isEmpty(a) {
+    return a[0][0] > a[1][0] || a[0][1] > a[1][1] || a[0][2] > a[1][2];
+}
+/**
+ * Updates a bounding box from a list of points.
+ * @param {import("./types.js").aabb} a
+ * @param {import("./types.js").vec3[] | import("./types.js").TypedArray} points
+ * @returns {import("./types.js").aabb}
+ */ function fromPoints(a, points) {
+    empty(a);
+    const isFlatArray = !points[0]?.length;
+    const l = points.length / (isFlatArray ? 3 : 1);
+    for(let i = 0; i < l; i++){
+        if (isFlatArray) {
+            includePoint(a, points, i * 3);
+        } else {
+            includePoint(a, points[i]);
+        }
+    }
+    return a;
+}
+/**
+ * Returns a list of 8 points from a bounding box.
+ * @param {import("./types.js").aabb} a
+ * @param {import("./types.js").vec3[]} [points]
+ * @returns {import("./types.js").vec3[]}
+ */ function getCorners(a, points = Array.from({
+    length: 8
+}, ()=>[])) {
+    set3(points[0], 0, a[0][0], a[0][1], a[0][2]);
+    set3(points[1], 0, a[1][0], a[0][1], a[0][2]);
+    set3(points[2], 0, a[1][0], a[0][1], a[1][2]);
+    set3(points[3], 0, a[0][0], a[0][1], a[1][2]);
+    set3(points[4], 0, a[0][0], a[1][1], a[0][2]);
+    set3(points[5], 0, a[1][0], a[1][1], a[0][2]);
+    set3(points[6], 0, a[1][0], a[1][1], a[1][2]);
+    set3(points[7], 0, a[0][0], a[1][1], a[1][2]);
+    return points;
+}
+/**
+ * Returns the center of a bounding box.
+ * @param {import("./types.js").aabb} a
+ * @param {import("./types.js").vec3} out
+ * @returns {import("./types.js").vec3}
+ */ function center(a, out = [
+    0,
+    0,
+    0
+]) {
+    out[0] = (a[0][0] + a[1][0]) / 2;
+    out[1] = (a[0][1] + a[1][1]) / 2;
+    out[2] = (a[0][2] + a[1][2]) / 2;
+    return out;
+}
+/**
+ * Returns the size of a bounding box.
+ * @param {import("./types.js").aabb} a
+ * @param {import("./types.js").vec3} out
+ * @returns {import("./types.js").vec3}
+ */ function size(a, out = [
+    0,
+    0,
+    0
+]) {
+    out[0] = Math.abs(a[1][0] - a[0][0]);
+    out[1] = Math.abs(a[1][1] - a[0][1]);
+    out[2] = Math.abs(a[1][2] - a[0][2]);
+    return out;
+}
+/**
+ * Checks if a point is inside a bounding box.
+ * @param {import("./types.js").aabb} a
+ * @param {import("./types.js").vec3} p
+ * @returns {boolean}
+ */ function containsPoint(a, [x, y, z]) {
+    return x >= a[0][0] && x <= a[1][0] && y >= a[0][1] && y <= a[1][1] && z >= a[0][2] && z <= a[1][2];
+}
+/**
+ * Includes a bounding box in another.
+ * @param {import("./types.js").aabb} a
+ * @param {import("./types.js").aabb} b
+ * @returns {import("./types.js").aabb}
+ */ function includeAABB(a, b) {
+    if (isEmpty(a)) {
+        set(a, b);
+    } else if (isEmpty(b)) ; else {
+        a[0][0] = Math.min(a[0][0], b[0][0]);
+        a[0][1] = Math.min(a[0][1], b[0][1]);
+        a[0][2] = Math.min(a[0][2], b[0][2]);
+        a[1][0] = Math.max(a[1][0], b[1][0]);
+        a[1][1] = Math.max(a[1][1], b[1][1]);
+        a[1][2] = Math.max(a[1][2], b[1][2]);
+    }
+    return a;
+}
+/**
+ * Includes a point in a bounding box.
+ * @param {import("./types.js").aabb} a
+ * @param {import("./types.js").vec3} p
+ * @param {number} [i=0] offset in the point array
+ * @returns {import("./types.js").vec3}
+ */ function includePoint(a, p, i = 0) {
+    a[0][0] = Math.min(a[0][0], p[i + 0]);
+    a[0][1] = Math.min(a[0][1], p[i + 1]);
+    a[0][2] = Math.min(a[0][2], p[i + 2]);
+    a[1][0] = Math.max(a[1][0], p[i + 0]);
+    a[1][1] = Math.max(a[1][1], p[i + 1]);
+    a[1][2] = Math.max(a[1][2], p[i + 2]);
+    return a;
+}
+/**
+ * Prints a bounding box to a string.
+ * @param {import("./types.js").aabb} a
+ * @param {number} [precision=4]
+ * @returns {string}
+ */ function toString$2(a, precision = 4) {
+    // prettier-ignore
+    return `[${toString$3(a[0], precision)}, ${toString$3(a[1], precision)}]`;
+}
+
+var aabb = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  center: center,
+  containsPoint: containsPoint,
+  copy: copy,
+  create: create$2,
+  empty: empty,
+  fromPoints: fromPoints,
+  getCorners: getCorners,
+  includeAABB: includeAABB,
+  includePoint: includePoint,
+  isEmpty: isEmpty,
+  set: set,
+  size: size,
+  toString: toString$2
+});
+
+/**
+ * Enum for different side values
+ * @readonly
+ * @enum {number}
+ */ const Side = Object.freeze({
+    OnPlane: 0,
+    Same: -1,
+    Opposite: 1
+});
+const TEMP_0$1 = create$3();
+/**
+ * Creates a new plane
+ * @returns {import("./types.js").plane}
+ */ function create$1() {
+    return [
+        [
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            1,
+            0
+        ]
+    ];
+}
+/**
+ * Returns on which side a point is.
+ * @param {import("./types.js").plane} plane
+ * @param {import("./types.js").vec3} point
+ * @returns {number}
+ */ function side([planePoint, planeNormal], point) {
+    set$1(TEMP_0$1, planePoint);
+    sub(TEMP_0$1, point);
+    normalize(TEMP_0$1);
+    const dot$1 = dot(TEMP_0$1, planeNormal);
+    if (dot$1 > 0) return Side.Opposite;
+    if (dot$1 < 0) return Side.Same;
+    return Side.OnPlane;
+}
+/**
+ * Prints a plane to a string.
+ * @param {import("./types.js").plane} a
+ * @param {number} [precision=4]
+ * @returns {string}
+ */ function toString$1(a, precision = 4) {
+    // prettier-ignore
+    return `[${toString$3(a[0], precision)}, ${toString$3(a[1], precision)}]`;
+}
+
+var plane = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  Side: Side,
+  create: create$1,
+  side: side,
+  toString: toString$1
+});
+
+/**
+ * Enum for different intersections values
+ * @readonly
+ * @enum {number}
+ */ const Intersections = Object.freeze({
+    Intersect: 1,
+    NoIntersect: 0,
+    SamePlane: -1,
+    Parallel: -2,
+    TriangleDegenerate: -2
+});
+const TEMP_0 = create$3();
+const TEMP_1 = create$3();
+const TEMP_2 = create$3();
+const TEMP_3 = create$3();
+const TEMP_4 = create$3();
+const TEMP_5 = create$3();
+const TEMP_6 = create$3();
+const TEMP_7 = create$3();
+const EPSILON = 1e-6;
+/**
+ * Creates a new ray
+ * @returns {import("./types.js").ray}
+ */ function create() {
+    return [
+        [
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            0,
+            1
+        ]
+    ];
+}
+/**
+ * Determines if a ray intersect a plane and set intersection point
+ * @see {@link https://www.cs.princeton.edu/courses/archive/fall00/cs426/lectures/raycast/sld017.htm}
+ * @param {import("./types.js").ray} ray
+ * @param {import("./types.js").plane} plane
+ * @param {import("./types.js").vec3} out
+ * @returns {number}
+ */ function hitTestPlane([origin, direction], [point, normal], out = create$3()) {
+    set$1(TEMP_0, origin);
+    set$1(TEMP_1, direction);
+    const dotDirectionNormal = dot(TEMP_1, normal);
+    if (dotDirectionNormal === 0) return Intersections.SamePlane;
+    set$1(TEMP_2, point);
+    const t = dot(sub(TEMP_2, TEMP_0), normal) / dotDirectionNormal;
+    if (t < 0) return Intersections.Parallel;
+    set$1(out, add(TEMP_0, scale(TEMP_1, t)));
+    return Intersections.Intersect;
+}
+/**
+ * Determines if a ray intersect a triangle and set intersection point
+ * @see {@link http://geomalgorithms.com/a06-_intersect-2.html#intersect3D_RayTriangle()}
+ * @param {import("./types.js").ray} ray
+ * @param {import("./types.js").triangle} triangle
+ * @param {import("./types.js").vec3} out
+ * @returns {number}
+ */ function hitTestTriangle([origin, direction], [p0, p1, p2], out = create$3()) {
+    // get triangle edge vectors and plane normal
+    const u = sub(set$1(TEMP_0, p1), p0);
+    const v = sub(set$1(TEMP_1, p2), p0);
+    const n = cross(set$1(TEMP_2, u), v);
+    if (length(n) < EPSILON) return Intersections.TriangleDegenerate;
+    // ray vectors
+    const w0 = sub(set$1(TEMP_3, origin), p0);
+    // params to calc ray-plane intersect
+    const a = -dot(n, w0);
+    const b = dot(n, direction);
+    if (Math.abs(b) < EPSILON) {
+        if (a === 0) return Intersections.SamePlane;
+        return Intersections.NoIntersect;
+    }
+    // get intersect point of ray with triangle plane
+    const r = a / b;
+    // ray goes away from triangle
+    if (r < -EPSILON) return Intersections.NoIntersect;
+    // for a segment, also test if (r > 1.0) => no intersect
+    // intersect point of ray and plane
+    const I = add(set$1(TEMP_4, origin), scale(set$1(TEMP_5, direction), r));
+    const uu = dot(u, u);
+    const uv = dot(u, v);
+    const vv = dot(v, v);
+    const w = sub(set$1(TEMP_6, I), p0);
+    const wu = dot(w, u);
+    const wv = dot(w, v);
+    const D = uv * uv - uu * vv;
+    // get and test parametric coords
+    const s = (uv * wv - vv * wu) / D;
+    if (s < -EPSILON || s > 1.0 + EPSILON) return Intersections.NoIntersect;
+    const t = (uv * wu - uu * wv) / D;
+    if (t < -EPSILON || s + t > 1.0 + EPSILON) return Intersections.NoIntersect;
+    set$1(out, u);
+    scale(out, s);
+    add(out, scale(set$1(TEMP_7, v), t));
+    add(out, p0);
+    return Intersections.Intersect;
+}
+/**
+ * Determines if a ray intersect an AABB bounding box
+ * @see {@link http://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms}
+ * @param {import("./types.js").ray} ray
+ * @param {import("./types.js").aabb} aabb
+ * @returns {boolean}
+ */ function hitTestAABB([origin, direction], aabb) {
+    const dirFracx = 1.0 / direction[0];
+    const dirFracy = 1.0 / direction[1];
+    const dirFracz = 1.0 / direction[2];
+    const min = aabb[0];
+    const max = aabb[1];
+    const minx = min[0];
+    const miny = min[1];
+    const minz = min[2];
+    const maxx = max[0];
+    const maxy = max[1];
+    const maxz = max[2];
+    const t1 = (minx - origin[0]) * dirFracx;
+    const t2 = (maxx - origin[0]) * dirFracx;
+    const t3 = (miny - origin[1]) * dirFracy;
+    const t4 = (maxy - origin[1]) * dirFracy;
+    const t5 = (minz - origin[2]) * dirFracz;
+    const t6 = (maxz - origin[2]) * dirFracz;
+    const tmin = Math.max(Math.max(Math.min(t1, t2), Math.min(t3, t4)), Math.min(t5, t6));
+    const tmax = Math.min(Math.min(Math.max(t1, t2), Math.max(t3, t4)), Math.max(t5, t6));
+    return !(tmax < 0 || tmin > tmax);
+}
+/**
+ * Alias for {@link hitTestAABB}
+ * @function
+ */ const intersectsAABB = hitTestAABB;
+/**
+ * Prints a plane to a string.
+ * @param {import("./types.js").ray} a
+ * @param {number} [precision=4]
+ * @returns {string}
+ */ function toString(a, precision = 4) {
+    // prettier-ignore
+    return `[${toString$3(a[0], precision)}, ${toString$3(a[1], precision)}]`;
+}
+
+var ray = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  Intersections: Intersections,
+  create: create,
+  hitTestAABB: hitTestAABB,
+  hitTestPlane: hitTestPlane,
+  hitTestTriangle: hitTestTriangle,
+  intersectsAABB: intersectsAABB,
+  toString: toString
+});
+
+export { aabb, plane, ray };
