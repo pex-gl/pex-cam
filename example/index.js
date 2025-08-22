@@ -7,7 +7,7 @@ import {
 import createContext from "pex-context";
 import { cube as createCube } from "primitive-geometry";
 import { mat4 } from "pex-math";
-import * as random from "pex-random";
+import random from "pex-random";
 import createGUI from "pex-gui";
 
 const canvas = document.createElement("canvas");
