@@ -150,7 +150,9 @@ class OrbiterControls {
     vec3.scale(position, this.currentDistance);
     vec3.add(position, target);
 
-    if (this.camera.zoom) this.camera.set({ zoom: vec3.length(position) });
+    if (this.camera.zoom !== undefined) {
+      this.camera.set({ zoom: vec3.length(position) });
+    }
     this.camera.set({ position });
   }
 
